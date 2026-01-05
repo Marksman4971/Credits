@@ -1,0 +1,12 @@
+{
+  "name": "penalty-checker",
+  "version": "1.0.0",
+  "description": "积分系统惩罚自动结算脚本",
+  "main": "penalty-checker.js",
+  "scripts": {
+    "check": "node penalty-checker.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

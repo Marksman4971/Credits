@@ -1,0 +1,408 @@
+/**
+ * star-shop.css - 星星商店样式（浅色主题）
+ */
+
+/* 页面描述 */
+.page-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* 商店区块 */
+.shop-section {
+    margin-bottom: 30px;
+}
+
+.shop-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 卡片容器 */
+.star-shop-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* ========== 星星升级卡片 ========== */
+.star-card {
+    background: linear-gradient(145deg, #fff9e6, #fff5d6);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 2px solid #ffd700;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.star-card::before {
+    content: '⭐';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    font-size: 80px;
+    opacity: 0.1;
+}
+
+.star-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.star-card-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.star-card-avatar {
+    font-size: 2rem;
+}
+
+.star-card-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.star-card-points {
+    text-align: right;
+}
+
+.star-card-points .points-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #d4a200;
+}
+
+.star-card-points .points-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* 星星等级显示 */
+.star-display {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.star-level-circle {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fff, #f0f0f0);
+    border: 4px solid #ffd700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 4px 15px rgba(255, 215, 0, 0.3),
+        inset 0 2px 10px rgba(255, 255, 255, 0.8);
+}
+
+.star-level-circle.max {
+    border-color: #9c27b0;
+    background: linear-gradient(145deg, #f3e5f5, #e1bee7);
+    box-shadow: 0 4px 20px rgba(156, 39, 176, 0.3);
+}
+
+.star-level-circle .level-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #d4a200;
+    line-height: 1;
+}
+
+.star-level-circle.max .level-number {
+    color: #9c27b0;
+}
+
+.star-level-circle .level-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.star-bonus {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.star-bonus strong {
+    color: #28a745;
+    font-size: 1.2rem;
+}
+
+/* 升级按钮 */
+.star-upgrade-action {
+    margin-top: 15px;
+}
+
+.btn-upgrade {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-upgrade.can-upgrade {
+    background: linear-gradient(135deg, #ffd700, #ffb300);
+    color: #5d4e00;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.btn-upgrade.can-upgrade:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+}
+
+.btn-upgrade.can-upgrade:active {
+    transform: translateY(-1px);
+}
+
+.btn-upgrade.cannot-upgrade,
+.btn-upgrade.disabled {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.btn-upgrade .upgrade-icon {
+    font-size: 1.2rem;
+}
+
+.btn-upgrade .upgrade-cost {
+    background: rgba(255,255,255,0.4);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+.upgrade-hint {
+    text-align: center;
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+/* ========== 任务槽卡片 ========== */
+.slot-card {
+    background: linear-gradient(145deg, #e3f2fd, #bbdefb);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 2px solid #2196f3;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.slot-card::before {
+    content: '📋';
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    font-size: 70px;
+    opacity: 0.1;
+}
+
+.slot-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.slot-card-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slot-card-avatar {
+    font-size: 2rem;
+}
+
+.slot-card-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.slot-card-count {
+    text-align: right;
+}
+
+.slot-card-count .count-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1976d2;
+}
+
+.slot-card-count .count-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* 槽位显示 */
+.slot-display {
+    padding: 15px 0;
+}
+
+.slot-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.slot-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #fff;
+    border: 2px dashed #90caf9;
+}
+
+.slot-dot.filled {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    border: none;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+}
+
+.slot-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* 购买按钮 */
+.slot-buy-action {
+    margin-top: 15px;
+}
+
+.btn-buy-slot {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-buy-slot.can-buy {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+}
+
+.btn-buy-slot.can-buy:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
+}
+
+.btn-buy-slot.cannot-buy,
+.btn-buy-slot.locked {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.btn-buy-slot .buy-cost {
+    background: rgba(255,255,255,0.3);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+.buy-hint {
+    text-align: center;
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+/* ========== 说明盒子 ========== */
+.shop-info-box {
+    background: #f8f9fa;
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-top: 25px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.shop-info-box h4 {
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.shop-info-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.shop-info-box li {
+    padding: 6px 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.shop-info-box li::before {
+    content: '✓';
+    color: #28a745;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 600px) {
+    .star-shop-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .star-level-circle {
+        width: 85px;
+        height: 85px;
+    }
+
+    .star-level-circle .level-number {
+        font-size: 2rem;
+    }
+
+    .star-card, .slot-card {
+        padding: 15px;
+    }
+}

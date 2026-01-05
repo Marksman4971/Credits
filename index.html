@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>积分管理系统 V3.0</title>
+
+    <!-- 主题色 -->
+    <meta name="theme-color" content="#667eea">
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCI2ksv8LV88v7wKIj9-2a-QfUl1vbD8JA",
+            authDomain: "points-reward-system.firebaseapp.com",
+            databaseURL: "https://points-reward-system-default-rtdb.firebaseio.com",
+            projectId: "points-reward-system",
+            storageBucket: "points-reward-system.firebasestorage.app",
+            messagingSenderId: "655875805786",
+            appId: "1:655875805786:web:c69c29e0dc2d32b50d7e63",
+            measurementId: "G-QXGLX0KW5E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // 将Firebase功能暴露到全局
+        window.firebaseDb = {
+            database,
+            ref,
+            set,
+            get,
+            onValue,
+            push
+        };
+
+        // 初始化完成后触发事件
+        window.dispatchEvent(new Event('firebaseReady'));
+    </script>
+
+    <!-- CSS 模块 -->
+    <link rel="stylesheet" href="./css/base.css">
+    <link rel="stylesheet" href="./css/layout.css">
+    <link rel="stylesheet" href="./css/components.css">
+    <link rel="stylesheet" href="./css/modal.css">
+    <link rel="stylesheet" href="./css/bounty.css">
+    <link rel="stylesheet" href="./css/task.css">
+    <link rel="stylesheet" href="./css/stats.css">
+    <link rel="stylesheet" href="./css/star-shop.css">
+    <link rel="stylesheet" href="./css/penalty.css">
+    <link rel="stylesheet" href="./css/responsive.css">
+</head>
+<body>
+    <!-- 连接状态指示器 -->
+    <div id="connection-status" class="connection-status status-offline">
+        <span class="status-icon">●</span>
+        <span class="status-text">离线</span>
+    </div>
+
+    <div class="container">
+        <!-- 页头 -->
+        <header class="header">
+            <h1>积分管理系统</h1>
+            <p>完成任务，获得悬赏！</p>
+        </header>
+
+        <!-- 导航标签 -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-page="home">首页</button>
+            <button class="nav-tab" data-page="bounty">悬赏任务</button>
+            <button class="nav-tab" data-page="daily">每日任务</button>
+            <button class="nav-tab" data-page="star-shop">星星商店</button>
+            <button class="nav-tab" data-page="penalty">惩罚</button>
+            <button class="nav-tab" data-page="points">积分管理</button>
+            <button class="nav-tab" data-page="stats">统计</button>
+            <button class="nav-tab" data-page="history">历史记录</button>
+            <button class="nav-tab" data-page="settings">设置</button>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="content">
+
+            <!-- 首页 -->
+            <section id="page-home" class="page active">
+                <h2>积分总览</h2>
+
+                <div class="score-overview">
+                    <!-- 77积分卡 -->
+                    <div class="score-card user77-card">
+                        <div class="score-header">
+                            <span class="user-name">77</span>
+                        </div>
+                        <div class="score-body">
+                            <div class="score-value" id="user77-total-score">0</div>
+                            <div class="score-label">总积分</div>
+                        </div>
+                        <div class="score-footer">
+                            <div class="star-level">
+                                <span class="star-icon">⭐</span>
+                                <span class="star-value" id="user77-star-level">0</span>
+                                <span class="star-label">级</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 11积分卡 -->
+                    <div class="score-card user11-card">
+                        <div class="score-header">
+                            <span class="user-name">11</span>
+                        </div>
+                        <div class="score-body">
+                            <div class="score-value" id="user11-total-score">0</div>
+                            <div class="score-label">总积分</div>
+                        </div>
+                        <div class="score-footer">
+                            <div class="star-level">
+                                <span class="star-icon">⭐</span>
+                                <span class="star-value" id="user11-star-level">0</span>
+                                <span class="star-label">级</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 今日任务概览 -->
+                <div class="today-overview">
+                    <h3>今日任务</h3>
+                    <div class="today-tasks">
+                        <div class="user-today-tasks" id="user77-today-tasks">
+                            <h4>77</h4>
+                            <div class="task-list"></div>
+                        </div>
+                        <div class="user-today-tasks" id="user11-today-tasks">
+                            <h4>11</h4>
+                            <div class="task-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 进行中的悬赏 -->
+                <div class="active-bounties-preview">
+                    <h3>进行中的悬赏</h3>
+                    <div class="bounty-preview-list" id="active-bounties-list"></div>
+                </div>
+            </section>
+
+            <!-- 悬赏任务页 -->
+            <section id="page-bounty" class="page">
+                <h2>悬赏任务</h2>
+
+                <!-- 长期悬赏区域（系统发布） -->
+                <div class="bounty-section system-bounty-section">
+                    <div class="bounty-header">
+                        <h3 class="bounty-title">长期悬赏</h3>
+                        <button class="btn btn-primary" id="btn-create-system-bounty">发布悬赏</button>
+                    </div>
+                    <div class="system-bounty-info">
+                        <span class="info-item" id="user77-system-bounty-count">77: 0/3</span>
+                        <span class="info-item" id="user11-system-bounty-count">11: 0/3</span>
+                        <span class="info-item week-reset">每周一 6:00 重置</span>
+                    </div>
+                    <div class="bounty-list system-bounty-list" id="system-bounty-list"></div>
+                </div>
+
+                <!-- 普通悬赏区域 -->
+                <div class="bounty-section normal-bounty-section">
+                    <div class="bounty-header">
+                        <h3 class="bounty-title">普通悬赏</h3>
+                        <button class="btn btn-primary" id="btn-create-bounty">发布悬赏</button>
+                    </div>
+
+                    <!-- 悬赏筛选 -->
+                    <div class="bounty-filters">
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="open">待接取</button>
+                        <button class="filter-btn" data-filter="taken">进行中</button>
+                        <button class="filter-btn" data-filter="settled">已完成</button>
+                    </div>
+
+                    <!-- 悬赏列表 -->
+                    <div class="bounty-list" id="bounty-list"></div>
+                </div>
+            </section>
+
+            <!-- 每日任务页 -->
+            <section id="page-daily" class="page">
+                <h2>每日任务</h2>
+
+                <!-- 每日奖励提示 -->
+                <div class="daily-bonus-info">
+                    <div class="bonus-item">
+                        <span class="bonus-condition">完成3个任务</span>
+                        <span class="bonus-reward">+1分</span>
+                    </div>
+                    <div class="bonus-item">
+                        <span class="bonus-condition">完成5个任务</span>
+                        <span class="bonus-reward">再+2分</span>
+                    </div>
+                </div>
+
+                <!-- 任务池 -->
+                <div class="task-pool-section">
+                    <div class="section-header">
+                        <h3>任务池</h3>
+                        <button class="btn btn-secondary" id="btn-manage-pool">管理任务池</button>
+                    </div>
+                    <div class="task-pool-preview" id="task-pool-preview"></div>
+                </div>
+
+                <!-- 77的每日任务 -->
+                <div class="daily-task-section user77-section">
+                    <div class="section-header">
+                        <h3>77的任务</h3>
+                        <div class="daily-progress">
+                            <span class="progress-text" id="user77-progress-text">0/3</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="user77-progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="daily-task-slots" id="user77-daily-slots"></div>
+                    <button class="btn btn-add-task" id="btn-user77-add-task">+ 添加任务</button>
+                </div>
+
+                <!-- 11的每日任务 -->
+                <div class="daily-task-section user11-section">
+                    <div class="section-header">
+                        <h3>11的任务</h3>
+                        <div class="daily-progress">
+                            <span class="progress-text" id="user11-progress-text">0/3</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="user11-progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="daily-task-slots" id="user11-daily-slots"></div>
+                    <button class="btn btn-add-task" id="btn-user11-add-task">+ 添加任务</button>
+                </div>
+            </section>
+
+            <!-- 星星商店页 -->
+            <section id="page-star-shop" class="page">
+                <h2>⭐ 星星商店</h2>
+                <p class="page-desc">升级星星获得更多任务奖励，购买任务槽增加每日任务数量</p>
+
+                <!-- 星星升级区域 -->
+                <div class="shop-section">
+                    <h3>🌟 星星升级</h3>
+                    <div class="star-shop-cards" id="star-upgrade-cards">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- 任务槽购买区域 -->
+                <div class="shop-section">
+                    <h3>📋 任务槽</h3>
+                    <div class="star-shop-cards" id="task-slot-cards">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- 说明 -->
+                <div class="shop-info-box">
+                    <h4>说明</h4>
+                    <ul>
+                        <li>每升级2个星星等级，每日任务额外 +1 积分</li>
+                        <li>升级费用：500 → 1000 → 2000 → 4000 → 10000（之后固定）</li>
+                        <li>最高可升级到 99 级</li>
+                        <li>需要 2 颗星星才能解锁购买任务槽功能</li>
+                        <li>每个任务槽价格 500 积分</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 惩罚页 -->
+            <section id="page-penalty" class="page">
+                <h2>惩罚系统</h2>
+                <p class="page-desc">每日未完成3个任务将受到惩罚，连续未完成惩罚加倍</p>
+
+                <!-- 规则说明 -->
+                <div class="penalty-rules">
+                    <h3>惩罚规则</h3>
+                    <ul>
+                        <li>每天需完成至少 <strong>3个</strong> 每日任务</li>
+                        <li>少完成1个任务 = <strong>扣3分</strong></li>
+                        <li>连续多天未完成，扣分 <strong>翻倍</strong></li>
+                        <li>单日最多扣 <strong>100分</strong></li>
+                    </ul>
+                </div>
+
+                <!-- 惩罚状态卡片 -->
+                <div class="penalty-cards" id="penalty-cards">
+                    <!-- 动态渲染 -->
+                </div>
+
+                <!-- 惩罚记录 -->
+                <div class="penalty-history-section">
+                    <h3>惩罚记录</h3>
+                    <div class="penalty-history-list" id="penalty-history-list">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- 手动结算按钮 -->
+                <div class="penalty-actions">
+                    <button class="btn btn-danger" id="btn-check-penalty">立即结算今日惩罚</button>
+                </div>
+            </section>
+
+            <!-- 积分管理页 -->
+            <section id="page-points" class="page">
+                <h2>积分管理</h2>
+
+                <!-- 积分交易 -->
+                <div class="points-section trade-section">
+                    <h3>积分交易</h3>
+                    <div class="trade-form">
+                        <div class="form-group">
+                            <label>转出方</label>
+                            <select id="trade-from">
+                                <option value="user77">77</option>
+                                <option value="user11">11</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>转入方</label>
+                            <select id="trade-to">
+                                <option value="user11">11</option>
+                                <option value="user77">77</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>积分</label>
+                            <input type="number" id="trade-amount" min="1" placeholder="输入积分">
+                        </div>
+                        <button class="btn btn-primary" id="btn-trade">转账</button>
+                    </div>
+                </div>
+
+                <!-- 奖励 -->
+                <div class="points-section reward-section">
+                    <h3>奖励积分</h3>
+                    <div class="reward-form">
+                        <div class="form-group">
+                            <label>奖励对象</label>
+                            <select id="reward-target">
+                                <option value="user77">77</option>
+                                <option value="user11">11</option>
+                                <option value="both">两人都奖励</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>积分</label>
+                            <input type="number" id="reward-amount" min="1" placeholder="输入积分">
+                        </div>
+                        <div class="form-group">
+                            <label>原因</label>
+                            <input type="text" id="reward-reason" placeholder="奖励原因">
+                        </div>
+                        <button class="btn btn-success" id="btn-reward">奖励</button>
+                    </div>
+                </div>
+
+                <!-- 惩罚 -->
+                <div class="points-section penalty-section">
+                    <h3>扣除积分</h3>
+                    <div class="penalty-form">
+                        <div class="form-group">
+                            <label>扣分对象</label>
+                            <select id="penalty-target">
+                                <option value="user77">77</option>
+                                <option value="user11">11</option>
+                                <option value="both">两人都扣分</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>积分</label>
+                            <input type="number" id="penalty-amount" min="1" placeholder="输入积分">
+                        </div>
+                        <div class="form-group">
+                            <label>原因</label>
+                            <input type="text" id="penalty-reason" placeholder="扣分原因">
+                        </div>
+                        <button class="btn btn-danger" id="btn-penalty">扣分</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 统计页 -->
+            <section id="page-stats" class="page">
+                <h2>统计数据</h2>
+
+                <!-- 周统计 -->
+                <div class="stats-section">
+                    <h3>本周统计</h3>
+                    <div class="stats-cards">
+                        <div class="stats-card user77-stats">
+                            <h4>77</h4>
+                            <div class="stats-item">
+                                <span class="label">本周积分</span>
+                                <span class="value" id="stats-user77-weekly">0</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="label">完成任务</span>
+                                <span class="value" id="stats-user77-tasks">0</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="label">完成悬赏</span>
+                                <span class="value" id="stats-user77-bounties">0</span>
+                            </div>
+                        </div>
+                        <div class="stats-card user11-stats">
+                            <h4>11</h4>
+                            <div class="stats-item">
+                                <span class="label">本周积分</span>
+                                <span class="value" id="stats-user11-weekly">0</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="label">完成任务</span>
+                                <span class="value" id="stats-user11-tasks">0</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="label">完成悬赏</span>
+                                <span class="value" id="stats-user11-bounties">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 历史记录页 -->
+            <section id="page-history" class="page">
+                <h2>历史记录</h2>
+
+                <div class="history-filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="bounty">悬赏</button>
+                    <button class="filter-btn" data-filter="task">任务</button>
+                    <button class="filter-btn" data-filter="reward">奖励</button>
+                    <button class="filter-btn" data-filter="penalty">惩罚</button>
+                </div>
+
+                <div class="history-list" id="history-list"></div>
+            </section>
+
+            <!-- 设置页 -->
+            <section id="page-settings" class="page">
+                <h2>设置</h2>
+
+                <div class="settings-section">
+                    <h3>数据同步</h3>
+                    <div class="sync-info" id="sync-info">
+                        <p>上次同步: <span id="last-sync-time">--</span></p>
+                    </div>
+                    <div class="sync-controls">
+                        <button class="btn btn-secondary" id="btn-sync">手动同步</button>
+                        <button class="btn btn-secondary" id="btn-export">导出数据</button>
+                        <button class="btn btn-secondary" id="btn-import">导入数据</button>
+                    </div>
+                </div>
+
+                <div class="settings-section danger-zone">
+                    <h3>危险操作</h3>
+                    <div class="danger-buttons">
+                        <button class="btn btn-danger" id="btn-clear-history">清空历史</button>
+                        <button class="btn btn-danger" id="btn-reset-weekly">重置周统计</button>
+                        <button class="btn btn-danger" id="btn-reset-all">重置所有数据</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- 模态框容器 -->
+    <div id="modal-container">
+
+        <!-- 通用确认弹窗 -->
+        <div id="modal-confirm" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3 id="confirm-title">确认</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-message"></p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="confirm-cancel">取消</button>
+                    <button class="btn btn-primary" id="confirm-ok">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 密码验证弹窗 -->
+        <div id="modal-password" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3>请输入密码</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="password" id="input-password" class="modal-input" placeholder="请输入管理密码">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="password-cancel">取消</button>
+                    <button class="btn btn-primary" id="password-confirm">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 创建悬赏弹窗 -->
+        <div id="modal-bounty" class="modal-overlay">
+            <div class="modal-box modal-large">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3>发布悬赏</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>任务标题</label>
+                        <input type="text" id="bounty-title" class="modal-input" placeholder="输入任务标题">
+                    </div>
+                    <div class="form-group">
+                        <label>任务描述</label>
+                        <textarea id="bounty-desc" class="modal-input" rows="3" placeholder="详细描述任务内容"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>悬赏积分</label>
+                            <input type="number" id="bounty-points" class="modal-input" min="1" placeholder="积分">
+                        </div>
+                        <div class="form-group">
+                            <label>发布者</label>
+                            <select id="bounty-publisher" class="modal-input">
+                                <option value="system">系统任务</option>
+                                <option value="user77">77</option>
+                                <option value="user11">11</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>截止时间</label>
+                            <input type="datetime-local" id="bounty-deadline" class="modal-input">
+                        </div>
+                        <div class="form-group">
+                            <label>指定接取人</label>
+                            <select id="bounty-assignee" class="modal-input">
+                                <option value="">不限</option>
+                                <option value="user77">77</option>
+                                <option value="user11">11</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="bounty-cancel">取消</button>
+                    <button class="btn btn-primary" id="bounty-submit">发布</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务池管理弹窗 -->
+        <div id="modal-task-pool" class="modal-overlay">
+            <div class="modal-box modal-large">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3>管理任务池</h3>
+                </div>
+                <div class="modal-body">
+                    <!-- 添加任务表单 -->
+                    <div class="pool-add-section">
+                        <h4>添加新任务</h4>
+                        <div class="form-group">
+                            <label>任务名称</label>
+                            <input type="text" id="new-pool-task-name" class="modal-input" placeholder="输入任务名称">
+                        </div>
+                        <div class="form-group">
+                            <label>任务描述 (可选)</label>
+                            <textarea id="new-pool-task-desc" class="modal-input" rows="2" placeholder="任务描述"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>基础积分</label>
+                                <input type="number" id="new-pool-task-points" class="modal-input" min="1" value="1" placeholder="默认1">
+                            </div>
+                            <div class="form-group">
+                                <label>专属设置</label>
+                                <select id="new-pool-task-exclusive" class="modal-input">
+                                    <option value="">不限</option>
+                                    <option value="user77">77专属</option>
+                                    <option value="user11">11专属</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>每周次数限制 (0=不限)</label>
+                                <input type="number" id="new-pool-task-weekly-limit" class="modal-input" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>连续打卡触发次数 (0=不启用)</label>
+                                <input type="number" id="new-pool-task-streak-trigger" class="modal-input" min="0" value="0" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="form-group" id="streak-reward-group" style="display:none;">
+                            <label>连续打卡奖励</label>
+                            <div class="streak-reward-options">
+                                <label class="radio-option">
+                                    <input type="radio" name="streak-reward-type" value="double" checked> 积分翻倍
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="streak-reward-type" value="fixed"> 固定奖励
+                                    <input type="number" id="streak-fixed-bonus" class="inline-input" min="1" value="5" placeholder="分">
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="btn-add-pool-task">添加任务</button>
+                    </div>
+
+                    <hr class="divider">
+
+                    <!-- 任务列表 -->
+                    <h4>现有任务</h4>
+                    <div class="pool-task-list" id="pool-task-list"></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="pool-close">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 选择任务弹窗 -->
+        <div id="modal-select-task" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3>选择任务</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="available-tasks" id="available-tasks"></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="select-task-cancel">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑任务弹窗 -->
+        <div id="modal-edit-task" class="modal-overlay">
+            <div class="modal-box modal-large">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3>编辑任务</h3>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-task-id">
+                    <div class="form-group">
+                        <label>任务名称</label>
+                        <input type="text" id="edit-pool-task-name" class="modal-input">
+                    </div>
+                    <div class="form-group">
+                        <label>任务描述</label>
+                        <textarea id="edit-pool-task-desc" class="modal-input" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>基础积分</label>
+                            <input type="number" id="edit-pool-task-points" class="modal-input" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>专属设置</label>
+                            <select id="edit-pool-task-exclusive" class="modal-input">
+                                <option value="">不限</option>
+                                <option value="user77">77专属</option>
+                                <option value="user11">11专属</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>每周次数限制</label>
+                            <input type="number" id="edit-pool-task-weekly-limit" class="modal-input" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>连续打卡触发次数</label>
+                            <input type="number" id="edit-pool-task-streak-trigger" class="modal-input" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group" id="edit-streak-reward-group">
+                        <label>连续打卡奖励</label>
+                        <div class="streak-reward-options">
+                            <label class="radio-option">
+                                <input type="radio" name="edit-streak-reward-type" value="double"> 积分翻倍
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="edit-streak-reward-type" value="fixed"> 固定奖励
+                                <input type="number" id="edit-streak-fixed-bonus" class="inline-input" min="1" placeholder="分">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="edit-task-cancel">取消</button>
+                    <button class="btn btn-primary" id="edit-task-save">保存</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast-container"></div>
+
+    <!-- JS 模块 -->
+    <script src="./js/config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/store.js"></script>
+    <script src="./js/firebase-sync.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/modal.js"></script>
+    <script src="./js/bounty.js"></script>
+    <script src="./js/daily-task.js"></script>
+    <script src="./js/points.js"></script>
+    <script src="./js/stats.js"></script>
+    <script src="./js/history.js"></script>
+    <script src="./js/star-shop.js"></script>
+    <script src="./js/penalty.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>

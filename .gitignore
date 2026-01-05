@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Firebase service account keys (SENSITIVE!)
+serviceAccountKey.json
+serviceAccountKey*.json
+*serviceAccountKey*.json
+
+# Log files
+*.log
+log.txt
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build output
+dist/
+build/
+
+# Syncthing conflict files
+*.sync-conflict-*

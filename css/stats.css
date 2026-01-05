@@ -1,0 +1,301 @@
+/**
+ * stats.css - 统计、积分管理、历史记录样式
+ */
+
+/* ========== 统计区块 ========== */
+.stats-section {
+    margin-bottom: 30px;
+}
+
+.stats-section h3 {
+    font-size: 1.3em;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* 统计卡片组 */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.stats-card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.stats-card h4 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.qiqi-stats {
+    border-top: 4px solid var(--qiqi-color);
+}
+
+.yiyi-stats {
+    border-top: 4px solid var(--yiyi-color);
+}
+
+.stats-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stats-item:last-child {
+    border-bottom: none;
+}
+
+.stats-item .label {
+    color: var(--text-secondary);
+    font-size: 0.95em;
+}
+
+.stats-item .value {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ========== 星星奖励区块 ========== */
+.star-bonus-section {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-radius: var(--radius-lg);
+    padding: 25px;
+    margin-top: 30px;
+    border: 2px solid rgba(255, 193, 7, 0.2);
+}
+
+.star-bonus-section h3 {
+    color: #e65100;
+    margin-bottom: 15px;
+}
+
+.star-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.star-user-info {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.star-user-info h5 {
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.star-count {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+.star-small { color: #ffd700; }
+.star-big { color: #ff6b35; }
+.star-rainbow {
+    background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ========== 积分管理区块 ========== */
+.points-section {
+    background: var(--bg-light);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 25px;
+}
+
+.points-section h3 {
+    font-size: 1.2em;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.trade-section {
+    border-left: 4px solid var(--info-color);
+}
+
+.reward-section {
+    border-left: 4px solid var(--success-color);
+}
+
+.penalty-section {
+    border-left: 4px solid var(--danger-color);
+}
+
+/* 表单布局 */
+.trade-form,
+.reward-form,
+.penalty-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    align-items: end;
+}
+
+.trade-form .btn,
+.reward-form .btn,
+.penalty-form .btn {
+    height: 42px;
+}
+
+/* ========== 历史记录 ========== */
+.history-list {
+    display: grid;
+    gap: 12px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.history-item:hover {
+    transform: translateX(5px);
+    box-shadow: var(--shadow-md);
+}
+
+.history-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    flex-shrink: 0;
+}
+
+.history-icon.bounty {
+    background: #ffe4e1;
+    color: #d63384;
+}
+
+.history-icon.task {
+    background: #d4edda;
+    color: #155724;
+}
+
+.history-icon.reward {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.history-icon.penalty {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.history-icon.trade {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.history-desc {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.history-time {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.history-points {
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+
+.history-points.positive {
+    background: #d4edda;
+    color: #155724;
+}
+
+.history-points.negative {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ========== 设置页面 ========== */
+.settings-section {
+    background: var(--bg-light);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 25px;
+}
+
+.settings-section h3 {
+    font-size: 1.2em;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.sync-info {
+    background: var(--bg-white);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    margin-bottom: 15px;
+}
+
+.sync-info p {
+    color: var(--text-secondary);
+    font-size: 0.95em;
+}
+
+.sync-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 危险操作区 */
+.danger-zone {
+    border: 2px solid var(--danger-color);
+    background: #fff5f5;
+}
+
+.danger-zone h3 {
+    color: var(--danger-color);
+}
+
+.danger-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}

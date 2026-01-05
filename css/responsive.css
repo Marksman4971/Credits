@@ -1,0 +1,375 @@
+/**
+ * responsive.css - 响应式/移动端适配
+ */
+
+/* 平板设备 (768px 以下) */
+@media (max-width: 768px) {
+    /* 基础布局 */
+    .container {
+        padding: 10px;
+    }
+
+    .header {
+        padding: 20px 0;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        font-size: 1.8em;
+    }
+
+    .header p {
+        font-size: 1em;
+    }
+
+    .content {
+        padding: 20px 15px;
+        border-radius: var(--radius-lg);
+    }
+
+    /* 导航栏改为网格布局 */
+    .nav-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .nav-tab {
+        padding: 10px 8px;
+        font-size: 0.85em;
+        text-align: center;
+    }
+
+    /* 页面标题 */
+    .page h2 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+    }
+
+    /* 积分卡片 */
+    .score-overview {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .score-card {
+        padding: 20px;
+    }
+
+    .score-value {
+        font-size: 2.5em;
+    }
+
+    /* 悬赏信息 */
+    .bounty-info {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .bounty-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .bounty-actions {
+        flex-direction: column;
+    }
+
+    .bounty-actions .btn {
+        width: 100%;
+    }
+
+    /* 表单 */
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .trade-form,
+    .reward-form,
+    .penalty-form {
+        grid-template-columns: 1fr;
+    }
+
+    /* 统计卡片 */
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+
+    /* 今日任务 */
+    .today-tasks {
+        grid-template-columns: 1fr;
+    }
+
+    /* 模态框 */
+    .modal-box {
+        width: calc(100% - 20px);
+        max-height: 85vh;
+        margin: 10px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-input {
+        font-size: 16px; /* 防止 iOS 缩放 */
+    }
+
+    /* 连接状态 - 简化为圆形图标 */
+    .connection-status {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
+    }
+
+    .connection-status .status-text {
+        display: none;
+    }
+
+    .connection-status .status-icon {
+        font-size: 1em;
+    }
+
+    /* 按钮组 */
+    .sync-controls,
+    .danger-buttons {
+        flex-direction: column;
+    }
+
+    .sync-controls .btn,
+    .danger-buttons .btn {
+        width: 100%;
+    }
+
+    /* 筛选按钮 */
+    .bounty-filters,
+    .history-filters {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-btn {
+        flex-shrink: 0;
+    }
+
+    /* 任务槽位 */
+    .task-slot-content {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .task-actions {
+        width: 100%;
+    }
+
+    .task-actions .btn {
+        flex: 1;
+    }
+
+    /* 每日进度 */
+    .section-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .daily-progress {
+        width: 100%;
+    }
+
+    .daily-progress .progress-bar {
+        flex: 1;
+    }
+}
+
+/* 小手机 (480px 以下) */
+@media (max-width: 480px) {
+    .container {
+        padding: 8px;
+    }
+
+    .header h1 {
+        font-size: 1.5em;
+    }
+
+    .content {
+        padding: 15px 12px;
+    }
+
+    .nav-tabs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nav-tab {
+        padding: 8px 6px;
+        font-size: 0.8em;
+    }
+
+    .score-card {
+        padding: 15px;
+    }
+
+    .score-value {
+        font-size: 2em;
+    }
+
+    .bounty-item,
+    .task-slot,
+    .history-item {
+        padding: 12px;
+    }
+
+    .points-section,
+    .settings-section,
+    .stats-section {
+        padding: 15px;
+    }
+
+    .modal-box {
+        border-radius: var(--radius-lg);
+    }
+
+    .modal-header {
+        padding: 12px 20px;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    .modal-actions {
+        padding: 15px;
+        flex-direction: column;
+    }
+
+    /* 隐藏一些次要元素 */
+    .bounty-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}
+
+/* 横屏手机 */
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        padding: 10px 0;
+        margin-bottom: 10px;
+    }
+
+    .header h1 {
+        font-size: 1.5em;
+        margin-bottom: 0;
+    }
+
+    .header p {
+        display: none;
+    }
+
+    .modal-box {
+        max-height: 95vh;
+    }
+}
+
+/* 大屏幕优化 (1200px 以上) */
+@media (min-width: 1200px) {
+    .container {
+        padding: 30px;
+    }
+
+    .content {
+        padding: 40px;
+    }
+
+    .score-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bounty-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 增大点击区域 */
+    .btn {
+        min-height: 44px;
+    }
+
+    .nav-tab {
+        min-height: 44px;
+    }
+
+    .filter-btn {
+        min-height: 40px;
+    }
+
+    /* 移除悬停效果，改为点击效果 */
+    .btn:hover,
+    .card:hover,
+    .bounty-item:hover {
+        transform: none;
+    }
+
+    .btn:active,
+    .card:active,
+    .bounty-item:active {
+        transform: scale(0.98);
+    }
+
+    /* 显示删除按钮 */
+    .bounty-delete-btn {
+        opacity: 0.6;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    body {
+        background: white;
+    }
+
+    .header,
+    .nav-tabs,
+    .connection-status,
+    .modal-overlay,
+    #toast-container,
+    .btn {
+        display: none !important;
+    }
+
+    .content {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .page {
+        display: block !important;
+        page-break-inside: avoid;
+    }
+}
+
+/* 深色模式支持 (可选) */
+@media (prefers-color-scheme: dark) {
+    /* 如果需要支持深色模式，可以在这里添加样式 */
+}
+
+/* 减少动画 (无障碍) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

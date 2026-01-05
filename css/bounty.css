@@ -1,0 +1,310 @@
+/**
+ * bounty.css - 悬赏任务相关样式
+ */
+
+/* 悬赏区块 */
+.bounty-section {
+    background: var(--bg-light);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+}
+
+.bounty-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.bounty-title {
+    font-size: 1.4em;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* 悬赏列表 */
+.bounty-list {
+    display: grid;
+    gap: 15px;
+}
+
+/* 悬赏卡片 */
+.bounty-item {
+    background: var(--bg-white);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-color);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.bounty-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+/* 系统任务特殊样式 */
+.bounty-item.system-task {
+    border-left-color: var(--success-color);
+    background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+/* 悬赏状态标签 */
+.bounty-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.status-open {
+    background: #ffe4e1;
+    color: #d63384;
+}
+
+.status-taken {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-done {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-settled {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* 系统任务徽章 */
+.system-badge {
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* 悬赏标题 */
+.bounty-item-title {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* 悬赏信息网格 */
+.bounty-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.bounty-info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.bounty-info-item .label {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.bounty-info-item .value {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* 悬赏积分突出显示 */
+.bounty-points {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: #ff6b6b;
+}
+
+/* 悬赏描述 */
+.bounty-desc {
+    color: var(--text-secondary);
+    font-size: 0.95em;
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+/* 悬赏操作按钮 */
+.bounty-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.bounty-actions .btn {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+/* 删除按钮 */
+.bounty-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.bounty-item:hover .bounty-delete-btn {
+    opacity: 1;
+}
+
+.bounty-delete-btn:hover {
+    background: var(--danger-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* 截止时间警告 */
+.deadline-warning {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.deadline-normal {
+    color: var(--text-secondary);
+}
+
+/* 首页悬赏预览 */
+.active-bounties-preview {
+    margin-top: 30px;
+}
+
+.active-bounties-preview h3 {
+    font-size: 1.2em;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.bounty-preview-list {
+    display: grid;
+    gap: 12px;
+}
+
+.bounty-preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.bounty-preview-item:hover {
+    background: var(--qiqi-light);
+    transform: translateX(5px);
+}
+
+.bounty-preview-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bounty-preview-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.bounty-preview-points {
+    font-weight: 600;
+    color: #ff6b6b;
+}
+
+/* ========== 长期悬赏（系统悬赏）样式 ========== */
+
+/* 系统悬赏信息栏 */
+.system-bounty-info {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: var(--bg-white);
+    border-radius: var(--radius-md);
+    font-size: 0.9em;
+}
+
+.system-bounty-info .info-item {
+    padding: 4px 12px;
+    background: var(--bg-light);
+    border-radius: 20px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.system-bounty-info .info-item.limit-reached {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.system-bounty-info .week-reset {
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+/* 系统悬赏操作按钮 */
+.system-bounty-actions {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.user-action-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+}
+
+.user-action-row .user-label {
+    min-width: 30px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-action-row .limit-warning {
+    color: #dc2626;
+    font-size: 0.85em;
+    font-weight: 500;
+}

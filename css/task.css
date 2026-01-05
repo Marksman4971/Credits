@@ -1,0 +1,329 @@
+/**
+ * task.css - 每日任务相关样式
+ */
+
+/* 每日奖励提示 */
+.daily-bonus-info {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-radius: var(--radius-lg);
+    border: 1px solid #ffd54f;
+}
+
+.daily-bonus-info span {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.95rem;
+    color: #5d4e00;
+}
+
+.bonus-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.bonus-item .bonus-condition {
+    color: #666;
+}
+
+.bonus-item .bonus-reward {
+    color: #28a745;
+    font-weight: 700;
+}
+
+/* 任务池区块 */
+.task-pool-section {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 2px solid rgba(40, 167, 69, 0.2);
+}
+
+.task-pool-preview {
+    margin-top: 15px;
+}
+
+.pool-count-badge {
+    display: inline-block;
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--success-color);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.pool-tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.pool-task-preview {
+    background: var(--bg-white);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    font-size: 0.9em;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.pool-task-preview:hover {
+    border-color: var(--success-color);
+    transform: translateY(-2px);
+}
+
+/* 每日任务区块 */
+.daily-task-section {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow-sm);
+}
+
+.daily-task-section.qiqi-section {
+    border-left: 4px solid var(--qiqi-color);
+}
+
+.daily-task-section.yiyi-section {
+    border-left: 4px solid var(--yiyi-color);
+}
+
+.daily-task-section .section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-icon {
+    font-size: 1.2em;
+}
+
+/* 每日进度 */
+.daily-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-text {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 40px;
+}
+
+.daily-progress .progress-bar {
+    width: 100px;
+}
+
+/* 任务槽位 */
+.daily-task-slots {
+    display: grid;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* 任务槽位项 */
+.task-slot {
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    border: 2px dashed var(--border-color);
+    transition: all var(--transition-normal);
+}
+
+.task-slot.has-task {
+    border-style: solid;
+    border-color: var(--primary-color);
+    background: var(--bg-white);
+}
+
+.task-slot.completed {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+/* 空槽位 */
+.task-slot-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.task-slot-empty:hover {
+    background: rgba(102, 126, 234, 0.05);
+    border-color: var(--primary-color);
+}
+
+.task-slot-empty .add-icon {
+    font-size: 2em;
+    margin-bottom: 5px;
+    opacity: 0.5;
+}
+
+/* 任务内容 */
+.task-slot-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.task-info {
+    flex: 1;
+}
+
+.task-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.task-streak {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+.streak-count {
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.task-multiplier {
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    color: #212529;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+/* 任务操作 */
+.task-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.task-actions .btn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+}
+
+/* 完成按钮特效 */
+.btn-complete-task {
+    background: linear-gradient(135deg, var(--success-color), #20c997);
+    color: white;
+}
+
+.btn-complete-task:hover {
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+/* 已完成状态 */
+.task-slot.completed .task-name {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.task-completed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--success-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+/* 放弃任务按钮 */
+.btn-abandon-task {
+    background: transparent;
+    color: var(--text-muted);
+    padding: 6px 10px;
+}
+
+.btn-abandon-task:hover {
+    color: var(--danger-color);
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* 今日任务概览 */
+.today-overview {
+    margin-top: 30px;
+}
+
+.today-overview h3 {
+    font-size: 1.2em;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.today-tasks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.user-today-tasks {
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    padding: 15px;
+}
+
+.user-today-tasks h4 {
+    font-size: 1em;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-today-tasks .task-list {
+    display: grid;
+    gap: 8px;
+}
+
+.today-task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--bg-white);
+    border-radius: var(--radius-sm);
+    font-size: 0.9em;
+}
+
+.today-task-item.completed {
+    opacity: 0.6;
+}
+
+.today-task-item.completed .task-name {
+    text-decoration: line-through;
+}
