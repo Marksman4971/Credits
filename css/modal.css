@@ -304,3 +304,127 @@
 .user-select-option .option-label {
     font-weight: 500;
 }
+
+/* 同步冲突弹窗 */
+.modal-wide {
+    max-width: 600px;
+}
+
+.conflict-desc {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.conflict-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.conflict-side {
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    border: 2px solid transparent;
+}
+
+.conflict-side h4 {
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.95em;
+}
+
+.conflict-local {
+    border-color: #4caf50;
+}
+
+.conflict-local h4 {
+    color: #2e7d32;
+}
+
+.conflict-remote {
+    border-color: #2196f3;
+}
+
+.conflict-remote h4 {
+    color: #1565c0;
+}
+
+.conflict-data-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+    font-size: 0.9em;
+}
+
+.conflict-data-item:last-child {
+    border-bottom: none;
+}
+
+.conflict-data-item .label {
+    color: var(--text-secondary);
+}
+
+.conflict-data-item .value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.conflict-data-item .value.highlight {
+    color: #e91e63;
+}
+
+.conflict-actions {
+    flex-wrap: wrap;
+}
+
+.conflict-actions .btn {
+    flex: 1;
+    min-width: 100px;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #43a047, #1b5e20);
+}
+
+/* 同步结果提示 */
+.sync-result {
+    padding: 15px;
+    border-radius: var(--radius-md);
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.sync-result.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.sync-result.warning {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+@media (max-width: 480px) {
+    .conflict-compare {
+        grid-template-columns: 1fr;
+    }
+
+    .conflict-actions {
+        flex-direction: column;
+    }
+
+    .conflict-actions .btn {
+        width: 100%;
+    }
+}

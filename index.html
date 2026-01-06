@@ -459,7 +459,11 @@
                         <p>上次同步: <span id="last-sync-time">--</span></p>
                     </div>
                     <div class="sync-controls">
-                        <button class="btn btn-secondary" id="btn-sync">手动同步</button>
+                        <button class="btn btn-secondary" id="btn-sync">智能同步</button>
+                        <button class="btn btn-secondary" id="btn-sync-upload">本地→云端</button>
+                        <button class="btn btn-secondary" id="btn-sync-download">云端→本地</button>
+                    </div>
+                    <div class="sync-controls" style="margin-top: 10px;">
                         <button class="btn btn-secondary" id="btn-export">导出数据</button>
                         <button class="btn btn-secondary" id="btn-import">导入数据</button>
                     </div>
@@ -494,6 +498,35 @@
                 <div class="modal-actions">
                     <button class="btn btn-secondary" id="confirm-cancel">取消</button>
                     <button class="btn btn-primary" id="confirm-ok">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 同步冲突弹窗 -->
+        <div id="modal-sync-conflict" class="modal-overlay">
+            <div class="modal-box modal-wide">
+                <div class="modal-header">
+                    <div class="modal-drag-handle"></div>
+                    <h3>数据冲突</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="conflict-desc">本地数据与云端数据存在差异，请选择如何处理：</p>
+                    <div class="conflict-compare">
+                        <div class="conflict-side conflict-local">
+                            <h4>本地数据</h4>
+                            <div id="conflict-local-data"></div>
+                        </div>
+                        <div class="conflict-side conflict-remote">
+                            <h4>云端数据</h4>
+                            <div id="conflict-remote-data"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions conflict-actions">
+                    <button class="btn btn-secondary" id="conflict-cancel">取消</button>
+                    <button class="btn btn-primary" id="conflict-use-local">使用本地</button>
+                    <button class="btn btn-primary" id="conflict-use-remote">使用云端</button>
+                    <button class="btn btn-success" id="conflict-merge">智能合并</button>
                 </div>
             </div>
         </div>
