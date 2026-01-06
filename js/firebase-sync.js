@@ -156,6 +156,23 @@ const FirebaseSync = {
 
         if (remoteTime && (!localTime || new Date(remoteTime) > new Date(localTime))) {
             console.log('[Firebase] 远程数据更新，同步到本地');
+
+            // 保护积分数据：保留较大的积分值（除非是惩罚扣分）
+            const localPoints = Store.get('points');
+            if (localPoints && remoteData.points) {
+                for (const userId of ['user77', 'user11']) {
+                    if (localPoints[userId] && remoteData.points[userId]) {
+                        // 保留较大的积分值
+                        if (localPoints[userId].total > remoteData.points[userId].total) {
+                            remoteData.points[userId].total = localPoints[userId].total;
+                        }
+                        if (localPoints[userId].weekly > remoteData.points[userId].weekly) {
+                            remoteData.points[userId].weekly = localPoints[userId].weekly;
+                        }
+                    }
+                }
+            }
+
             Store.replaceData(remoteData);
             this.lastSyncTime = new Date();
             this.updateSyncTimeDisplay();
@@ -210,13 +227,16 @@ const FirebaseSync = {
                     Store.data.history = mergedHistory;
                 }
 
-                // 合并 points（取较小值，因为扣分后会变小）
+                // 合并 points（取较大值，保留积分）
                 if (remoteData.points) {
                     for (const userId of ['user77', 'user11']) {
                         if (remoteData.points[userId] && Store.data.points[userId]) {
-                            // 如果远程积分更少（被扣分了），使用远程值
-                            if (remoteData.points[userId].total < Store.data.points[userId].total) {
+                            // 保留较大的积分值
+                            if (remoteData.points[userId].total > Store.data.points[userId].total) {
                                 Store.data.points[userId].total = remoteData.points[userId].total;
+                            }
+                            if (remoteData.points[userId].weekly > Store.data.points[userId].weekly) {
+                                Store.data.points[userId].weekly = remoteData.points[userId].weekly;
                             }
                         }
                     }
