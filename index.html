@@ -158,6 +158,7 @@
                 <div class="bounty-section periodic-bounty-section">
                     <div class="bounty-header">
                         <h3 class="bounty-title">周期任务</h3>
+                        <button class="btn btn-primary" id="btn-create-periodic-task">发布周期任务</button>
                     </div>
                     <div class="periodic-tasks-container">
                         <div class="periodic-task-group" id="week-tasks">
@@ -335,7 +336,7 @@
                     <ul>
                         <li>周任务：每周日截止，未完成 <strong>扣10分</strong></li>
                         <li>月任务：每月末截止，未完成 <strong>扣30分</strong></li>
-                        <li>年任务：年末截止，未完成 <strong>扣70分</strong></li>
+                        <li>年任务：每年末截止，未完成 <strong>扣70分</strong></li>
                     </ul>
                 </div>
 
@@ -683,9 +684,9 @@
                         <label>周期类型</label>
                         <select id="bounty-period" class="modal-input">
                             <option value="">普通任务</option>
-                            <option value="week">周任务（周日截止，未完成扣10分）</option>
-                            <option value="month">月任务（月末截止，未完成扣30分）</option>
-                            <option value="year">年任务（年末截止，未完成扣70分）</option>
+                            <option value="week">周任务（每周日截止，未完成扣10分）</option>
+                            <option value="month">月任务（每月末截止，未完成扣30分）</option>
+                            <option value="year">年任务（每年末截止，未完成扣70分）</option>
                         </select>
                     </div>
                 </div>

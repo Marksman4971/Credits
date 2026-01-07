@@ -16,11 +16,24 @@ const BountyModule = {
         // 发布普通悬赏按钮
         document.getElementById('btn-create-bounty')?.addEventListener('click', () => {
             Modal.show('bounty');
+            setTimeout(() => {
+                // 隐藏周期选择（普通悬赏不需要）
+                const periodRow = document.getElementById('bounty-period')?.closest('.form-group');
+                if (periodRow) periodRow.style.display = 'none';
+                // 显示指派人选择
+                const assigneeRow = document.getElementById('bounty-assignee')?.closest('.form-group');
+                if (assigneeRow) assigneeRow.style.display = 'block';
+            }, 100);
         });
 
         // 发布长期悬赏按钮
         document.getElementById('btn-create-system-bounty')?.addEventListener('click', () => {
             this.showSystemBountyModal();
+        });
+
+        // 发布周期任务按钮
+        document.getElementById('btn-create-periodic-task')?.addEventListener('click', () => {
+            this.showPeriodicTaskModal();
         });
 
         // 筛选按钮
@@ -115,13 +128,14 @@ const BountyModule = {
     },
 
     /**
-     * 渲染系统悬赏列表（长期悬赏）
+     * 渲染系统悬赏列表（长期悬赏，不含周期任务）
      */
     renderSystemBountyList() {
         const container = document.getElementById('system-bounty-list');
         if (!container) return;
 
-        const bounties = Store.getBounties().filter(b => b.publisher === 'system');
+        // 只显示系统发布的、没有周期的长期悬赏
+        const bounties = Store.getBounties().filter(b => b.publisher === 'system' && !b.period);
 
         if (bounties.length === 0) {
             container.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><p>暂无长期悬赏</p></div>';
@@ -361,18 +375,48 @@ const BountyModule = {
             if (publisherSelect) {
                 publisherSelect.value = 'system';
             }
+            // 隐藏周期选择
+            const periodRow = document.getElementById('bounty-period')?.closest('.form-group');
+            if (periodRow) periodRow.style.display = 'none';
+            // 显示指派人选择
+            const assigneeRow = document.getElementById('bounty-assignee')?.closest('.form-group');
+            if (assigneeRow) assigneeRow.style.display = 'block';
         }, 100);
     },
 
     /**
-     * 渲染普通悬赏列表（非系统悬赏）
+     * 显示创建周期任务弹窗
+     */
+    showPeriodicTaskModal() {
+        Modal.show('bounty');
+        setTimeout(() => {
+            // 预设发布者为系统
+            const publisherSelect = document.getElementById('bounty-publisher');
+            if (publisherSelect) {
+                publisherSelect.value = 'system';
+            }
+            // 显示周期选择并预设为周任务
+            const periodSelect = document.getElementById('bounty-period');
+            const periodRow = periodSelect?.closest('.form-group');
+            if (periodRow) periodRow.style.display = 'block';
+            if (periodSelect) {
+                periodSelect.value = 'week';
+            }
+            // 隐藏指派人选择（周期任务两人都要完成）
+            const assigneeRow = document.getElementById('bounty-assignee')?.closest('.form-group');
+            if (assigneeRow) assigneeRow.style.display = 'none';
+        }, 100);
+    },
+
+    /**
+     * 渲染普通悬赏列表（非系统悬赏、非周期任务）
      */
     renderList() {
         const container = document.getElementById('bounty-list');
         if (!container) return;
 
-        // 只显示非系统悬赏
-        let bounties = Store.getBounties().filter(b => b.publisher !== 'system');
+        // 只显示非系统悬赏、非周期任务
+        let bounties = Store.getBounties().filter(b => b.publisher !== 'system' && !b.period);
 
         // 应用筛选
         if (this.currentFilter !== 'all') {
