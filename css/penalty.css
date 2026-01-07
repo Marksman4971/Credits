@@ -399,6 +399,37 @@
     font-weight: 500;
 }
 
+/* 周期任务已完成状态 */
+.periodic-status-done {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    color: #28a745;
+}
+
+.periodic-status-done .done-icon {
+    font-size: 1.5rem;
+    background: #d4edda;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.periodic-status-done .done-text {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.btn-reset-period {
+    font-size: 0.8rem;
+    padding: 5px 15px;
+}
+
 /* 响应式 */
 @media (max-width: 600px) {
     .penalty-cards {

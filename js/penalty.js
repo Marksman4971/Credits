@@ -248,6 +248,14 @@ const PenaltyModule = {
     },
 
     /**
+     * 检查周期任务是否两人都完成
+     */
+    isTaskFullyCompleted(task) {
+        const completedBy = task.completedBy || [];
+        return completedBy.includes('user77') && completedBy.includes('user11');
+    },
+
+    /**
      * 渲染周期任务惩罚状态
      */
     renderPeriodicPenaltyStatus() {
@@ -256,13 +264,12 @@ const PenaltyModule = {
 
         const bounties = Store.getBounties();
 
-        // 获取各周期任务
-        const weekTasks = bounties.filter(b => b.period === 'week' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
-        const monthTasks = bounties.filter(b => b.period === 'month' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
-        const yearTasks = bounties.filter(b => b.period === 'year' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+        // 获取各周期任务（所有任务，不管完成状态）
+        const weekTasks = bounties.filter(b => b.period === 'week');
+        const monthTasks = bounties.filter(b => b.period === 'month');
+        const yearTasks = bounties.filter(b => b.period === 'year');
 
         // 计算截止时间
-        const now = new Date();
         const weekDeadline = this.getWeekDeadline();
         const monthDeadline = this.getMonthDeadline();
         const yearDeadline = this.getYearDeadline();
@@ -274,6 +281,45 @@ const PenaltyModule = {
                 ${this.renderPeriodicStatusCard('year', '年任务', yearTasks, yearDeadline, 70)}
             </div>
         `;
+
+        // 绑定重置按钮事件
+        container.querySelectorAll('.btn-reset-period').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const period = e.target.dataset.period;
+                this.resetPeriodTasks(period);
+            });
+        });
+    },
+
+    /**
+     * 重置指定周期的任务完成状态
+     */
+    resetPeriodTasks(period) {
+        const periodName = { week: '周', month: '月', year: '年' }[period];
+
+        if (!confirm(`确定要重置所有${periodName}任务的完成状态吗？`)) {
+            return;
+        }
+
+        const bounties = Store.getBounties();
+        let updated = false;
+
+        bounties.forEach(b => {
+            if (b.period === period) {
+                b.completedBy = [];
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            Store.set('bounties', bounties);
+            this.refresh();
+            if (typeof BountyModule !== 'undefined') {
+                BountyModule.refresh();
+            }
+            FirebaseSync.sync();
+            UI.showToast(`${periodName}任务状态已重置`, 'success');
+        }
     },
 
     /**
@@ -284,17 +330,16 @@ const PenaltyModule = {
         const daysRemaining = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
         const isUrgent = daysRemaining <= 3;
 
-        // 计算完成状态
+        // 计算完成状态：检查是否所有任务两人都完成了
         const total = tasks.length;
-        const completed = tasks.filter(t => t.status === CONFIG.BOUNTY_STATUS.SETTLED).length;
-        const inProgress = tasks.filter(t => t.status === CONFIG.BOUNTY_STATUS.TAKEN).length;
-        const pending = tasks.filter(t => t.status === CONFIG.BOUNTY_STATUS.OPEN).length;
+        const fullyCompletedCount = tasks.filter(t => this.isTaskFullyCompleted(t)).length;
+        const allDone = total > 0 && fullyCompletedCount === total;
 
-        const allDone = total === 0 || pending === 0 && inProgress === 0;
         const statusClass = allDone ? 'safe' : (isUrgent ? 'urgent' : 'warning');
-
-        // 格式化截止日期
         const deadlineStr = `${deadline.getMonth() + 1}/${deadline.getDate()}`;
+
+        // 未完成的任务
+        const incompleteTasks = tasks.filter(t => !this.isTaskFullyCompleted(t));
 
         return `
             <div class="periodic-status-card ${statusClass}">
@@ -307,14 +352,23 @@ const PenaltyModule = {
                 <div class="periodic-status-body">
                     ${total === 0 ? `
                         <div class="periodic-status-empty">暂无任务</div>
+                    ` : allDone ? `
+                        <div class="periodic-status-done">
+                            <span class="done-icon">✓</span>
+                            <span class="done-text">本${label.charAt(0)}任务已全部完成</span>
+                        </div>
                     ` : `
                         <div class="periodic-status-tasks">
-                            ${tasks.map(t => this.renderPeriodicTaskItem(t)).join('')}
+                            ${incompleteTasks.map(t => this.renderPeriodicTaskItem(t)).join('')}
                         </div>
                     `}
                 </div>
                 <div class="periodic-status-footer">
-                    <span class="periodic-penalty-amount">未完成扣 ${penalty} 分</span>
+                    ${allDone ? `
+                        <button class="btn btn-sm btn-secondary btn-reset-period" data-period="${period}">重置状态</button>
+                    ` : `
+                        <span class="periodic-penalty-amount">未完成扣 ${penalty} 分</span>
+                    `}
                 </div>
             </div>
         `;
