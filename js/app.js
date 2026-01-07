@@ -71,6 +71,23 @@ const App = {
     },
 
     /**
+     * 清空所有历史记录
+     */
+    async clearAllHistory() {
+        const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？');
+        if (!confirmed) return;
+
+        const verified = await UI.requirePassword();
+        if (!verified) return;
+
+        Store.clearHistory();
+        HistoryModule.refresh();
+        StatsModule.refresh();
+        FirebaseSync.sync();
+        UI.showToast('历史记录已清空', 'success');
+    },
+
+    /**
      * 初始化设置页面
      */
     initSettings() {
@@ -98,48 +115,8 @@ const App = {
         });
 
         // 清空历史（设置页）
-        document.getElementById('btn-clear-history')?.addEventListener('click', async () => {
-            const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？');
-            if (!confirmed) return;
-
-            const verified = await UI.requirePassword();
-            if (!verified) return;
-
-            Store.clearHistory();
-            HistoryModule.refresh();
-            StatsModule.refresh();
-            FirebaseSync.sync();
-            UI.showToast('历史记录已清空', 'success');
-        });
-
-        // 清空历史（历史页）
-        document.getElementById('btn-clear-history-page')?.addEventListener('click', async () => {
-            const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？');
-            if (!confirmed) return;
-
-            const verified = await UI.requirePassword();
-            if (!verified) return;
-
-            Store.clearHistory();
-            HistoryModule.refresh();
-            StatsModule.refresh();
-            FirebaseSync.sync();
-            UI.showToast('历史记录已清空', 'success');
-        });
-
-        // 清空历史（统计页）
-        document.getElementById('btn-clear-stats')?.addEventListener('click', async () => {
-            const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？这将影响统计数据。');
-            if (!confirmed) return;
-
-            const verified = await UI.requirePassword();
-            if (!verified) return;
-
-            Store.clearHistory();
-            HistoryModule.refresh();
-            StatsModule.refresh();
-            FirebaseSync.sync();
-            UI.showToast('历史记录已清空', 'success');
+        document.getElementById('btn-clear-history')?.addEventListener('click', () => {
+            App.clearAllHistory();
         });
 
         // 重置周统计
