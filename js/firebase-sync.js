@@ -299,7 +299,7 @@ const FirebaseSync = {
             details: []
         };
 
-        // 检查积分差异
+        // 只检查总积分差异
         for (const userId of ['user77', 'user11']) {
             const localPoints = localData.points?.[userId]?.total || 0;
             const remotePoints = remoteData.points?.[userId]?.total || 0;
@@ -308,23 +308,10 @@ const FirebaseSync = {
                 conflict.hasConflict = true;
                 conflict.points[userId] = true;
                 conflict.details.push({
-                    field: `${userId} 总积分`,
+                    field: userId,
                     local: localPoints,
                     remote: remotePoints,
                     diff: localPoints - remotePoints
-                });
-            }
-
-            const localWeekly = localData.points?.[userId]?.weekly || 0;
-            const remoteWeekly = remoteData.points?.[userId]?.weekly || 0;
-
-            if (localWeekly !== remoteWeekly) {
-                conflict.hasConflict = true;
-                conflict.details.push({
-                    field: `${userId} 周积分`,
-                    local: localWeekly,
-                    remote: remoteWeekly,
-                    diff: localWeekly - remoteWeekly
                 });
             }
         }
@@ -458,29 +445,19 @@ const FirebaseSync = {
         const user11Name = typeof Utils !== 'undefined' ? Utils.getUserName('user11') : '11';
 
         const user77Total = data.points?.user77?.total || 0;
-        const user77Weekly = data.points?.user77?.weekly || 0;
         const user11Total = data.points?.user11?.total || 0;
-        const user11Weekly = data.points?.user11?.weekly || 0;
 
         const highlight77 = conflict.points.user77 ? 'highlight' : '';
         const highlight11 = conflict.points.user11 ? 'highlight' : '';
 
         return `
             <div class="conflict-data-item">
-                <span class="label">${user77Name} 总积分</span>
-                <span class="value ${highlight77}">${user77Total}</span>
+                <span class="label">${user77Name}</span>
+                <span class="value ${highlight77}">${user77Total} 分</span>
             </div>
             <div class="conflict-data-item">
-                <span class="label">${user77Name} 周积分</span>
-                <span class="value">${user77Weekly}</span>
-            </div>
-            <div class="conflict-data-item">
-                <span class="label">${user11Name} 总积分</span>
-                <span class="value ${highlight11}">${user11Total}</span>
-            </div>
-            <div class="conflict-data-item">
-                <span class="label">${user11Name} 周积分</span>
-                <span class="value">${user11Weekly}</span>
+                <span class="label">${user11Name}</span>
+                <span class="value ${highlight11}">${user11Total} 分</span>
             </div>
             <div class="conflict-data-item">
                 <span class="label">历史记录</span>
