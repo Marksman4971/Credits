@@ -31,7 +31,7 @@ const PenaltyModule = {
      */
     refresh() {
         this.renderCards();
-        this.renderHistory();
+        this.renderPeriodicPenaltyStatus();
     },
 
     /**
@@ -248,31 +248,126 @@ const PenaltyModule = {
     },
 
     /**
-     * 渲染惩罚历史
+     * 渲染周期任务惩罚状态
      */
-    renderHistory() {
-        const container = document.getElementById('penalty-history-list');
+    renderPeriodicPenaltyStatus() {
+        const container = document.getElementById('periodic-penalty-status');
         if (!container) return;
 
-        const history = Store.getHistory('penalty').slice(0, 20);
+        const bounties = Store.getBounties();
 
-        if (history.length === 0) {
-            container.innerHTML = '<div class="penalty-empty">暂无惩罚记录</div>';
-            return;
-        }
+        // 获取各周期任务
+        const weekTasks = bounties.filter(b => b.period === 'week' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+        const monthTasks = bounties.filter(b => b.period === 'month' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+        const yearTasks = bounties.filter(b => b.period === 'year' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
 
-        container.innerHTML = history.map(record => `
-            <div class="penalty-history-item">
-                <div class="penalty-history-info">
-                    <div class="penalty-history-user">${Utils.getUserName(record.user)}</div>
-                    <div class="penalty-history-detail">${record.detail}</div>
+        // 计算截止时间
+        const now = new Date();
+        const weekDeadline = this.getWeekDeadline();
+        const monthDeadline = this.getMonthDeadline();
+        const yearDeadline = this.getYearDeadline();
+
+        container.innerHTML = `
+            <div class="periodic-status-grid">
+                ${this.renderPeriodicStatusCard('week', '周任务', weekTasks, weekDeadline, 10)}
+                ${this.renderPeriodicStatusCard('month', '月任务', monthTasks, monthDeadline, 30)}
+                ${this.renderPeriodicStatusCard('year', '年任务', yearTasks, yearDeadline, 70)}
+            </div>
+        `;
+    },
+
+    /**
+     * 渲染单个周期状态卡片
+     */
+    renderPeriodicStatusCard(period, label, tasks, deadline, penalty) {
+        const now = new Date();
+        const daysRemaining = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+        const isUrgent = daysRemaining <= 3;
+
+        // 计算完成状态
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.status === CONFIG.BOUNTY_STATUS.SETTLED).length;
+        const inProgress = tasks.filter(t => t.status === CONFIG.BOUNTY_STATUS.TAKEN).length;
+        const pending = tasks.filter(t => t.status === CONFIG.BOUNTY_STATUS.OPEN).length;
+
+        const allDone = total === 0 || pending === 0 && inProgress === 0;
+        const statusClass = allDone ? 'safe' : (isUrgent ? 'urgent' : 'warning');
+
+        // 格式化截止日期
+        const deadlineStr = `${deadline.getMonth() + 1}/${deadline.getDate()}`;
+
+        return `
+            <div class="periodic-status-card ${statusClass}">
+                <div class="periodic-status-header">
+                    <span class="periodic-status-label">${label}</span>
+                    <span class="periodic-status-deadline ${isUrgent ? 'urgent' : ''}">
+                        ${deadlineStr} 截止 (${daysRemaining}天)
+                    </span>
                 </div>
-                <div>
-                    <div class="penalty-history-points">${record.points} 分</div>
-                    <div class="penalty-history-date">${Utils.formatDate(record.time, 'MM-DD HH:mm')}</div>
+                <div class="periodic-status-body">
+                    ${total === 0 ? `
+                        <div class="periodic-status-empty">暂无任务</div>
+                    ` : `
+                        <div class="periodic-status-tasks">
+                            ${tasks.map(t => this.renderPeriodicTaskItem(t)).join('')}
+                        </div>
+                    `}
+                </div>
+                <div class="periodic-status-footer">
+                    <span class="periodic-penalty-amount">未完成扣 ${penalty} 分</span>
                 </div>
             </div>
-        `).join('');
+        `;
+    },
+
+    /**
+     * 渲染周期任务项
+     */
+    renderPeriodicTaskItem(task) {
+        const statusClass = task.status === CONFIG.BOUNTY_STATUS.TAKEN ? 'in-progress' : 'pending';
+        const statusText = task.status === CONFIG.BOUNTY_STATUS.TAKEN
+            ? `${Utils.getUserName(task.assignee)} 进行中`
+            : '待接取';
+
+        return `
+            <div class="periodic-task-status-item ${statusClass}">
+                <span class="task-name">${task.title}</span>
+                <span class="task-status">${statusText}</span>
+            </div>
+        `;
+    },
+
+    /**
+     * 获取本周截止时间（周日23:59:59）
+     */
+    getWeekDeadline() {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+        const deadline = new Date(now);
+        deadline.setDate(now.getDate() + daysUntilSunday);
+        deadline.setHours(23, 59, 59, 999);
+        return deadline;
+    },
+
+    /**
+     * 获取本月截止时间（月末23:59:59）
+     */
+    getMonthDeadline() {
+        const now = new Date();
+        const deadline = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        deadline.setHours(23, 59, 59, 999);
+        return deadline;
+    },
+
+    /**
+     * 获取本年截止时间（12/31 23:59:59）
+     */
+    getYearDeadline() {
+        const now = new Date();
+        const deadline = new Date(now.getFullYear(), 11, 31);
+        deadline.setHours(23, 59, 59, 999);
+        return deadline;
     }
 };
 

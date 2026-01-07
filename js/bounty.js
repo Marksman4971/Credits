@@ -37,6 +37,7 @@ const BountyModule = {
      */
     refresh() {
         this.checkWeeklyReset();
+        this.renderPeriodicTasks();
         this.renderSystemBountyList();
         this.renderList();
         this.updateWeeklyCountDisplay();
@@ -540,10 +541,42 @@ const BountyModule = {
             case 'complete':
                 await this.completeAndSettle(bountyId);
                 break;
+            case 'abandon':
+                await this.abandon(bountyId);
+                break;
             case 'delete':
                 await this.delete(bountyId);
                 break;
         }
+    },
+
+    /**
+     * 放弃悬赏
+     * @param {string} bountyId
+     */
+    async abandon(bountyId) {
+        const bounty = Store.getBounties().find(b => b.id === bountyId);
+        if (!bounty) return;
+
+        const confirmed = await UI.confirm('放弃任务', '确定要放弃这个任务吗？');
+        if (!confirmed) return;
+
+        Store.updateBounty(bountyId, {
+            assignee: null,
+            status: CONFIG.BOUNTY_STATUS.OPEN,
+            takenAt: null
+        });
+
+        Store.addHistory({
+            type: 'bounty',
+            action: 'abandon',
+            title: `放弃悬赏: ${bounty.title}`,
+            detail: bounty.assignee ? Utils.getUserName(bounty.assignee) : ''
+        });
+
+        this.refresh();
+        FirebaseSync.sync();
+        UI.showToast('已放弃任务', 'info');
     },
 
     /**
@@ -556,6 +589,7 @@ const BountyModule = {
         const publisher = document.getElementById('bounty-publisher').value;
         const deadline = document.getElementById('bounty-deadline').value;
         const assignee = document.getElementById('bounty-assignee').value;
+        const period = document.getElementById('bounty-period')?.value || '';
 
         // 验证
         if (!title) {
@@ -575,6 +609,7 @@ const BountyModule = {
             publisher,
             deadline: deadline || null,
             assignee: assignee || null,
+            period: period || null,
             status: assignee ? CONFIG.BOUNTY_STATUS.TAKEN : CONFIG.BOUNTY_STATUS.OPEN,
             createdAt: new Date().toISOString()
         };
@@ -582,10 +617,11 @@ const BountyModule = {
         Store.addBounty(bounty);
 
         // 记录历史
+        const periodLabel = period ? this.getPeriodLabel(period) : '';
         Store.addHistory({
             type: 'bounty',
             action: 'create',
-            title: `发布悬赏: ${title}`,
+            title: `发布${periodLabel}悬赏: ${title}`,
             detail: `积分: ${points}`,
             points: points
         });
@@ -594,6 +630,155 @@ const BountyModule = {
         this.refresh();
         FirebaseSync.sync();
         UI.showToast('悬赏发布成功', 'success');
+    },
+
+    /**
+     * 获取周期标签
+     */
+    getPeriodLabel(period) {
+        const labels = {
+            'week': '周',
+            'month': '月',
+            'year': '年'
+        };
+        return labels[period] || '';
+    },
+
+    /**
+     * 获取周期惩罚分数
+     */
+    getPeriodPenalty(period) {
+        const penalties = {
+            'week': 10,
+            'month': 30,
+            'year': 70
+        };
+        return penalties[period] || 0;
+    },
+
+    /**
+     * 渲染周期任务
+     */
+    renderPeriodicTasks() {
+        const bounties = Store.getBounties();
+
+        // 按周期分类
+        const weekTasks = bounties.filter(b => b.period === 'week' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+        const monthTasks = bounties.filter(b => b.period === 'month' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+        const yearTasks = bounties.filter(b => b.period === 'year' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+
+        // 渲染各列表
+        this.renderPeriodicList('week-task-list', weekTasks);
+        this.renderPeriodicList('month-task-list', monthTasks);
+        this.renderPeriodicList('year-task-list', yearTasks);
+
+        // 更新截止日期显示
+        this.updatePeriodicDeadlines();
+    },
+
+    /**
+     * 渲染单个周期任务列表
+     */
+    renderPeriodicList(containerId, tasks) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (tasks.length === 0) {
+            container.innerHTML = '<div class="empty-periodic">暂无任务</div>';
+            return;
+        }
+
+        container.innerHTML = tasks.map(task => `
+            <div class="periodic-task-item" data-id="${task.id}">
+                <div class="periodic-task-info">
+                    <span class="periodic-task-title">${task.title}</span>
+                    <span class="periodic-task-points">+${task.points}分</span>
+                </div>
+                <div class="periodic-task-status">
+                    ${this.getPeriodicTaskStatus(task)}
+                </div>
+                <div class="periodic-task-actions">
+                    ${this.getPeriodicTaskActions(task)}
+                </div>
+            </div>
+        `).join('');
+
+        // 绑定事件
+        this.bindPeriodicTaskEvents(container);
+    },
+
+    /**
+     * 获取周期任务状态显示
+     */
+    getPeriodicTaskStatus(task) {
+        if (task.status === CONFIG.BOUNTY_STATUS.TAKEN) {
+            return `<span class="status-badge status-taken">${Utils.getUserName(task.assignee)} 进行中</span>`;
+        }
+        return `<span class="status-badge status-open">待接取</span>`;
+    },
+
+    /**
+     * 获取周期任务操作按钮
+     */
+    getPeriodicTaskActions(task) {
+        if (task.status === CONFIG.BOUNTY_STATUS.TAKEN) {
+            return `
+                <button class="btn btn-success btn-xs" data-action="complete">完成</button>
+                <button class="btn btn-secondary btn-xs" data-action="abandon">放弃</button>
+                <button class="btn btn-danger btn-xs" data-action="delete">删除</button>
+            `;
+        }
+        return `
+            <button class="btn btn-warning btn-xs" data-action="assign">接取</button>
+            <button class="btn btn-danger btn-xs" data-action="delete">删除</button>
+        `;
+    },
+
+    /**
+     * 绑定周期任务事件
+     */
+    bindPeriodicTaskEvents(container) {
+        container.querySelectorAll('.periodic-task-item').forEach(item => {
+            const bountyId = item.dataset.id;
+            item.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+                    this.handleAction(action, bountyId);
+                });
+            });
+        });
+    },
+
+    /**
+     * 更新周期截止日期显示
+     */
+    updatePeriodicDeadlines() {
+        const now = new Date();
+
+        // 周任务：本周日截止
+        const weekEnd = new Date(now);
+        const dayOfWeek = now.getDay();
+        const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+        weekEnd.setDate(now.getDate() + daysUntilSunday);
+        weekEnd.setHours(23, 59, 59, 999);
+        const weekDeadline = document.getElementById('week-deadline');
+        if (weekDeadline) {
+            weekDeadline.textContent = `${weekEnd.getMonth() + 1}/${weekEnd.getDate()} 截止`;
+        }
+
+        // 月任务：本月末截止
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const monthDeadline = document.getElementById('month-deadline');
+        if (monthDeadline) {
+            monthDeadline.textContent = `${monthEnd.getMonth() + 1}/${monthEnd.getDate()} 截止`;
+        }
+
+        // 年任务：12/31截止
+        const yearDeadline = document.getElementById('year-deadline');
+        if (yearDeadline) {
+            yearDeadline.textContent = '12/31 截止';
+        }
     },
 
     /**

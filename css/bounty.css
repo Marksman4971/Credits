@@ -308,3 +308,140 @@
     font-size: 0.85em;
     font-weight: 500;
 }
+
+/* ========== 周期任务样式 ========== */
+
+.periodic-bounty-section {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+}
+
+.periodic-tasks-container {
+    display: grid;
+    gap: 20px;
+}
+
+.periodic-task-group {
+    background: var(--bg-white);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    box-shadow: var(--shadow-sm);
+}
+
+.periodic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.periodic-label {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.periodic-deadline {
+    font-size: 0.85em;
+    color: #d97706;
+    font-weight: 500;
+    background: #fef3c7;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.periodic-list {
+    display: grid;
+    gap: 10px;
+}
+
+.periodic-task-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.periodic-task-item:hover {
+    background: #f3f4f6;
+}
+
+.periodic-task-info {
+    flex: 1;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.periodic-task-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.periodic-task-points {
+    font-weight: 600;
+    color: #059669;
+    font-size: 0.9em;
+}
+
+.periodic-task-status {
+    flex-shrink: 0;
+}
+
+.periodic-task-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.empty-periodic {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 15px;
+    font-style: italic;
+}
+
+/* 小按钮 */
+.btn-xs {
+    padding: 4px 8px;
+    font-size: 0.75em;
+}
+
+/* 状态徽章 */
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.status-badge.status-open {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.status-badge.status-taken {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+/* 手机端优化 */
+@media (max-width: 480px) {
+    .periodic-task-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .periodic-task-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

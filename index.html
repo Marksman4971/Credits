@@ -154,6 +154,36 @@
             <section id="page-bounty" class="page">
                 <h2>悬赏任务</h2>
 
+                <!-- 周期任务区域 -->
+                <div class="bounty-section periodic-bounty-section">
+                    <div class="bounty-header">
+                        <h3 class="bounty-title">周期任务</h3>
+                    </div>
+                    <div class="periodic-tasks-container">
+                        <div class="periodic-task-group" id="week-tasks">
+                            <div class="periodic-header">
+                                <span class="periodic-label">📅 周任务</span>
+                                <span class="periodic-deadline" id="week-deadline">周日截止</span>
+                            </div>
+                            <div class="periodic-list" id="week-task-list"></div>
+                        </div>
+                        <div class="periodic-task-group" id="month-tasks">
+                            <div class="periodic-header">
+                                <span class="periodic-label">📆 月任务</span>
+                                <span class="periodic-deadline" id="month-deadline">月末截止</span>
+                            </div>
+                            <div class="periodic-list" id="month-task-list"></div>
+                        </div>
+                        <div class="periodic-task-group" id="year-tasks">
+                            <div class="periodic-header">
+                                <span class="periodic-label">🗓️ 年任务</span>
+                                <span class="periodic-deadline" id="year-deadline">12/31截止</span>
+                            </div>
+                            <div class="periodic-list" id="year-task-list"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 长期悬赏区域（系统发布） -->
                 <div class="bounty-section system-bounty-section">
                     <div class="bounty-header">
@@ -281,11 +311,11 @@
             <!-- 惩罚页 -->
             <section id="page-penalty" class="page">
                 <h2>惩罚系统</h2>
-                <p class="page-desc">每日未完成3个任务将受到惩罚，连续未完成惩罚加倍</p>
+                <p class="page-desc">未完成任务将受到惩罚</p>
 
-                <!-- 规则说明 -->
+                <!-- 每日任务惩罚规则 -->
                 <div class="penalty-rules">
-                    <h3>惩罚规则</h3>
+                    <h3>每日任务惩罚</h3>
                     <ul>
                         <li>每天需完成至少 <strong>3个</strong> 每日任务</li>
                         <li>少完成1个任务 = <strong>扣3分</strong></li>
@@ -296,6 +326,21 @@
 
                 <!-- 惩罚状态卡片 -->
                 <div class="penalty-cards" id="penalty-cards">
+                    <!-- 动态渲染 -->
+                </div>
+
+                <!-- 周期任务惩罚规则 -->
+                <div class="penalty-rules periodic-penalty-rules">
+                    <h3>周期任务惩罚</h3>
+                    <ul>
+                        <li>周任务：每周日截止，未完成 <strong>扣10分</strong></li>
+                        <li>月任务：每月末截止，未完成 <strong>扣30分</strong></li>
+                        <li>年任务：12月31日截止，未完成 <strong>扣70分</strong></li>
+                    </ul>
+                </div>
+
+                <!-- 周期任务状态 -->
+                <div class="periodic-penalty-status" id="periodic-penalty-status">
                     <!-- 动态渲染 -->
                 </div>
 
@@ -633,6 +678,15 @@
                                 <option value="user11">11</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label>周期类型</label>
+                        <select id="bounty-period" class="modal-input">
+                            <option value="">普通任务</option>
+                            <option value="week">周任务（周日截止，未完成扣10分）</option>
+                            <option value="month">月任务（月末截止，未完成扣30分）</option>
+                            <option value="year">年任务（12/31截止，未完成扣70分）</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-actions">
