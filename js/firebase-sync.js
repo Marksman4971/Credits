@@ -374,6 +374,8 @@ const FirebaseSync = {
             return;
         }
 
+        const self = this;  // 保存 this 引用
+
         // 计算积分差异摘要
         const user77Name = typeof Utils !== 'undefined' ? Utils.getUserName('user77') : '77';
         const user11Name = typeof Utils !== 'undefined' ? Utils.getUserName('user11') : '11';
@@ -386,6 +388,7 @@ const FirebaseSync = {
         // 更新弹窗内容
         const localSummary = modal.querySelector('.sync-local-summary');
         const remoteSummary = modal.querySelector('.sync-remote-summary');
+        const reasonEl = modal.querySelector('.sync-reason');
 
         if (localSummary) {
             localSummary.innerHTML = `${user77Name}: ${localUser77}分 | ${user11Name}: ${localUser11}分`;
@@ -394,32 +397,53 @@ const FirebaseSync = {
             remoteSummary.innerHTML = `${user77Name}: ${remoteUser77}分 | ${user11Name}: ${remoteUser11}分`;
         }
 
-        // 绑定按钮事件（使用一次性事件）
+        // 显示最近修改原因
+        if (reasonEl) {
+            const recentHistory = (remoteData.history || []).slice(0, 1);
+            if (recentHistory.length > 0) {
+                const latest = recentHistory[0];
+                reasonEl.innerHTML = `最近变更: ${latest.title || latest.detail || '未知'}`;
+                reasonEl.style.display = 'block';
+            } else {
+                reasonEl.style.display = 'none';
+            }
+        }
+
+        // 移除旧的事件监听器（克隆节点）
         const btnLocal = modal.querySelector('.sync-btn-local');
         const btnRemote = modal.querySelector('.sync-btn-remote');
 
-        const handleLocal = async () => {
-            btnLocal.removeEventListener('click', handleLocal);
-            btnRemote.removeEventListener('click', handleRemote);
-            modal.classList.remove('active');
-            await this.forceUpload(false);
-            this.updateStatus(true);
-            UI.showToast('已使用本地数据', 'success');
-            if (typeof App !== 'undefined' && App.refresh) App.refresh();
-        };
+        const newBtnLocal = btnLocal.cloneNode(true);
+        const newBtnRemote = btnRemote.cloneNode(true);
+        btnLocal.parentNode.replaceChild(newBtnLocal, btnLocal);
+        btnRemote.parentNode.replaceChild(newBtnRemote, btnRemote);
 
-        const handleRemote = async () => {
-            btnLocal.removeEventListener('click', handleLocal);
-            btnRemote.removeEventListener('click', handleRemote);
+        // 绑定新的事件
+        newBtnLocal.addEventListener('click', async function() {
             modal.classList.remove('active');
-            await this.forceDownload(false);
-            this.updateStatus(true);
-            UI.showToast('已使用云端数据', 'success');
+            try {
+                await self.forceUpload(false);
+                self.updateStatus(true);
+                UI.showToast('已使用本地数据', 'success');
+            } catch (e) {
+                console.error('上传失败:', e);
+                self.updateStatus(true);
+            }
             if (typeof App !== 'undefined' && App.refresh) App.refresh();
-        };
+        });
 
-        if (btnLocal) btnLocal.addEventListener('click', handleLocal);
-        if (btnRemote) btnRemote.addEventListener('click', handleRemote);
+        newBtnRemote.addEventListener('click', async function() {
+            modal.classList.remove('active');
+            try {
+                await self.forceDownload(false);
+                self.updateStatus(true);
+                UI.showToast('已使用云端数据', 'success');
+            } catch (e) {
+                console.error('下载失败:', e);
+                self.updateStatus(true);
+            }
+            if (typeof App !== 'undefined' && App.refresh) App.refresh();
+        });
 
         // 显示弹窗
         modal.classList.add('active');

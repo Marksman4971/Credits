@@ -523,6 +523,17 @@
     text-align: center;
 }
 
+.sync-reason {
+    background: #fff3e0;
+    color: #e65100;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    text-align: center;
+    margin: 0;
+    border: 1px solid #ffcc80;
+}
+
 /* 手机端优化 */
 @media (max-width: 480px) {
     .modal-sync-simple {
