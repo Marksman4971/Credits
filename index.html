@@ -388,40 +388,55 @@
             <section id="page-stats" class="page">
                 <h2>统计数据</h2>
 
-                <!-- 周统计 -->
+                <!-- 本周积分明细 -->
                 <div class="stats-section">
-                    <h3>本周统计</h3>
-                    <div class="stats-cards">
-                        <div class="stats-card user77-stats">
-                            <h4>77</h4>
-                            <div class="stats-item">
-                                <span class="label">本周积分</span>
-                                <span class="value" id="stats-user77-weekly">0</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="label">完成任务</span>
-                                <span class="value" id="stats-user77-tasks">0</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="label">完成悬赏</span>
-                                <span class="value" id="stats-user77-bounties">0</span>
-                            </div>
-                        </div>
-                        <div class="stats-card user11-stats">
-                            <h4>11</h4>
-                            <div class="stats-item">
-                                <span class="label">本周积分</span>
-                                <span class="value" id="stats-user11-weekly">0</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="label">完成任务</span>
-                                <span class="value" id="stats-user11-tasks">0</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="label">完成悬赏</span>
-                                <span class="value" id="stats-user11-bounties">0</span>
-                            </div>
-                        </div>
+                    <h3>本周积分明细 <span class="week-range" id="week-range"></span></h3>
+                    <div class="stats-table-container">
+                        <table class="stats-table" id="weekly-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>来源</th>
+                                    <th>77</th>
+                                    <th>11</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weekly-stats-body">
+                                <!-- 动态渲染 -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="total-row">
+                                    <td>本周合计</td>
+                                    <td id="weekly-total-user77">0</td>
+                                    <td id="weekly-total-user11">0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 总积分来源 -->
+                <div class="stats-section">
+                    <h3>总积分来源</h3>
+                    <div class="stats-table-container">
+                        <table class="stats-table" id="total-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>来源</th>
+                                    <th>77</th>
+                                    <th>11</th>
+                                </tr>
+                            </thead>
+                            <tbody id="total-stats-body">
+                                <!-- 动态渲染 -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="total-row">
+                                    <td>总计</td>
+                                    <td id="total-points-user77">0</td>
+                                    <td id="total-points-user11">0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </section>

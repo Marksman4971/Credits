@@ -299,3 +299,94 @@
     flex-wrap: wrap;
     gap: 10px;
 }
+
+/* ========== 统计表格 ========== */
+.stats-table-container {
+    overflow-x: auto;
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+}
+
+.stats-table th,
+.stats-table td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stats-table th {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.stats-table th:first-child {
+    text-align: left;
+    border-radius: var(--radius-lg) 0 0 0;
+}
+
+.stats-table th:last-child {
+    border-radius: 0 var(--radius-lg) 0 0;
+}
+
+.stats-table tbody tr:hover {
+    background: var(--bg-light);
+}
+
+.stats-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.stats-table td.positive {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.stats-table td.negative {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.stats-table tfoot tr {
+    background: var(--bg-light);
+}
+
+.stats-table tfoot td {
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.stats-table .total-row td:first-child {
+    color: var(--primary-color);
+}
+
+.stats-table .empty-row {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center !important;
+}
+
+.week-range {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+/* 手机端表格优化 */
+@media (max-width: 480px) {
+    .stats-table th,
+    .stats-table td {
+        padding: 10px 8px;
+        font-size: 0.9em;
+    }
+}

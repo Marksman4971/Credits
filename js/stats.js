@@ -1,10 +1,20 @@
 /**
  * stats.js - 统计模块
  *
- * 处理周统计、星星计算等
+ * 处理周统计、积分来源统计等
  */
 
 const StatsModule = {
+    // 积分来源类型映射
+    sourceTypes: {
+        'task': '每日任务',
+        'bounty': '悬赏任务',
+        'reward': '奖励',
+        'penalty': '惩罚',
+        'adjust': '手动调整',
+        'other': '其他'
+    },
+
     /**
      * 初始化
      */
@@ -17,8 +27,8 @@ const StatsModule = {
      */
     refresh() {
         this.checkWeeklyReset();
-        this.updateStatsCards();
-        this.updateStarBonus();
+        this.updateWeeklyTable();
+        this.updateTotalTable();
     },
 
     /**
@@ -43,52 +53,167 @@ const StatsModule = {
     },
 
     /**
-     * 更新统计卡片
+     * 获取本周日期范围
      */
-    updateStatsCards() {
-        ['user77', 'user11'].forEach(user => {
-            const weeklyPoints = Store.getWeeklyPoints(user);
-            const weeklyTasks = Store.get(`stats.${user}.weeklyTasks`) || 0;
-            const weeklyBounties = Store.get(`stats.${user}.weeklyBounties`) || 0;
+    getWeekRange() {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 周一为起点
 
-            const pointsEl = document.getElementById(`stats-${user}-weekly`);
-            const tasksEl = document.getElementById(`stats-${user}-tasks`);
-            const bountiesEl = document.getElementById(`stats-${user}-bounties`);
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - diff);
 
-            if (pointsEl) pointsEl.textContent = weeklyPoints;
-            if (tasksEl) tasksEl.textContent = weeklyTasks;
-            if (bountiesEl) bountiesEl.textContent = weeklyBounties;
-        });
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+
+        const formatDate = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+        return `(${formatDate(weekStart)} - ${formatDate(weekEnd)})`;
     },
 
     /**
-     * 更新星星奖励显示
+     * 从历史记录统计积分来源
+     * @param {boolean} weeklyOnly - 是否只统计本周
      */
-    updateStarBonus() {
-        const container = document.getElementById('star-bonus-info');
-        if (!container) return;
+    calculatePointsBySource(weeklyOnly = false) {
+        const history = Store.getHistory();
+        const weekStart = Utils.getWeekStartString();
 
-        const html = ['user77', 'user11'].map(user => {
-            const points = Store.getPoints(user);
-            const starLevel = Store.getStarLevel(user);
-            const taskBonus = Store.getTaskBonus(user);
+        const stats = {
+            user77: { task: 0, bounty: 0, reward: 0, penalty: 0, adjust: 0, other: 0 },
+            user11: { task: 0, bounty: 0, reward: 0, penalty: 0, adjust: 0, other: 0 }
+        };
 
-            return `
-                <div class="star-user-info">
-                    <h5>${Utils.getUserName(user)}</h5>
-                    <div class="star-level">
-                        <span class="star-icon">⭐</span>
-                        <span class="level-text">Lv.${starLevel}</span>
-                    </div>
-                    <div class="star-bonus-text">
-                        每日任务额外 +${taskBonus} 积分
-                    </div>
-                    <div class="text-muted">总积分: ${points}</div>
-                </div>
-            `;
-        }).join('');
+        history.forEach(record => {
+            if (!record.user || !record.points) return;
 
-        container.innerHTML = html;
+            // 如果是周统计，只计算本周的记录
+            if (weeklyOnly) {
+                const recordDate = record.time ? record.time.split('T')[0] : '';
+                if (recordDate < weekStart) return;
+            }
+
+            const user = record.user;
+            const points = record.points || 0;
+            const type = record.type || 'other';
+
+            if (stats[user]) {
+                if (stats[user].hasOwnProperty(type)) {
+                    stats[user][type] += points;
+                } else {
+                    stats[user].other += points;
+                }
+            }
+        });
+
+        return stats;
+    },
+
+    /**
+     * 更新本周积分明细表格
+     */
+    updateWeeklyTable() {
+        const weekRangeEl = document.getElementById('week-range');
+        if (weekRangeEl) {
+            weekRangeEl.textContent = this.getWeekRange();
+        }
+
+        const stats = this.calculatePointsBySource(true);
+        const tbody = document.getElementById('weekly-stats-body');
+        if (!tbody) return;
+
+        let html = '';
+        let total77 = 0;
+        let total11 = 0;
+
+        // 按来源类型显示
+        for (const [type, label] of Object.entries(this.sourceTypes)) {
+            const val77 = stats.user77[type] || 0;
+            const val11 = stats.user11[type] || 0;
+
+            // 只显示有数据的行
+            if (val77 !== 0 || val11 !== 0) {
+                const class77 = val77 > 0 ? 'positive' : (val77 < 0 ? 'negative' : '');
+                const class11 = val11 > 0 ? 'positive' : (val11 < 0 ? 'negative' : '');
+
+                html += `
+                    <tr>
+                        <td>${label}</td>
+                        <td class="${class77}">${val77 > 0 ? '+' : ''}${val77}</td>
+                        <td class="${class11}">${val11 > 0 ? '+' : ''}${val11}</td>
+                    </tr>
+                `;
+                total77 += val77;
+                total11 += val11;
+            }
+        }
+
+        if (html === '') {
+            html = '<tr><td colspan="3" class="empty-row">本周暂无积分变动</td></tr>';
+        }
+
+        tbody.innerHTML = html;
+
+        // 更新合计
+        const total77El = document.getElementById('weekly-total-user77');
+        const total11El = document.getElementById('weekly-total-user11');
+        if (total77El) {
+            total77El.textContent = (total77 > 0 ? '+' : '') + total77;
+            total77El.className = total77 > 0 ? 'positive' : (total77 < 0 ? 'negative' : '');
+        }
+        if (total11El) {
+            total11El.textContent = (total11 > 0 ? '+' : '') + total11;
+            total11El.className = total11 > 0 ? 'positive' : (total11 < 0 ? 'negative' : '');
+        }
+    },
+
+    /**
+     * 更新总积分来源表格
+     */
+    updateTotalTable() {
+        const stats = this.calculatePointsBySource(false);
+        const tbody = document.getElementById('total-stats-body');
+        if (!tbody) return;
+
+        let html = '';
+        let total77 = 0;
+        let total11 = 0;
+
+        // 按来源类型显示
+        for (const [type, label] of Object.entries(this.sourceTypes)) {
+            const val77 = stats.user77[type] || 0;
+            const val11 = stats.user11[type] || 0;
+
+            // 只显示有数据的行
+            if (val77 !== 0 || val11 !== 0) {
+                const class77 = val77 > 0 ? 'positive' : (val77 < 0 ? 'negative' : '');
+                const class11 = val11 > 0 ? 'positive' : (val11 < 0 ? 'negative' : '');
+
+                html += `
+                    <tr>
+                        <td>${label}</td>
+                        <td class="${class77}">${val77 > 0 ? '+' : ''}${val77}</td>
+                        <td class="${class11}">${val11 > 0 ? '+' : ''}${val11}</td>
+                    </tr>
+                `;
+                total77 += val77;
+                total11 += val11;
+            }
+        }
+
+        if (html === '') {
+            html = '<tr><td colspan="3" class="empty-row">暂无积分记录</td></tr>';
+        }
+
+        tbody.innerHTML = html;
+
+        // 更新合计（显示当前实际总积分）
+        const actual77 = Store.getPoints('user77');
+        const actual11 = Store.getPoints('user11');
+
+        const total77El = document.getElementById('total-points-user77');
+        const total11El = document.getElementById('total-points-user11');
+        if (total77El) total77El.textContent = actual77;
+        if (total11El) total11El.textContent = actual11;
     },
 
     /**
