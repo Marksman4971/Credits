@@ -182,7 +182,6 @@ const FirebaseSync = {
         const btnCancel = document.getElementById('conflict-cancel');
         const btnUseLocal = document.getElementById('conflict-use-local');
         const btnUseRemote = document.getElementById('conflict-use-remote');
-        const btnMerge = document.getElementById('conflict-merge');
 
         if (btnCancel) {
             btnCancel.addEventListener('click', () => {
@@ -207,15 +206,6 @@ const FirebaseSync = {
                 this.hideConflictModal();
                 if (this.conflictResolveCallback) {
                     this.conflictResolveCallback('remote');
-                }
-            });
-        }
-
-        if (btnMerge) {
-            btnMerge.addEventListener('click', () => {
-                this.hideConflictModal();
-                if (this.conflictResolveCallback) {
-                    this.conflictResolveCallback('merge');
                 }
             });
         }
@@ -413,6 +403,7 @@ const FirebaseSync = {
             btnRemote.removeEventListener('click', handleRemote);
             modal.classList.remove('active');
             await this.forceUpload(false);
+            this.updateStatus(true);
             UI.showToast('已使用本地数据', 'success');
             if (typeof App !== 'undefined' && App.refresh) App.refresh();
         };
@@ -422,6 +413,7 @@ const FirebaseSync = {
             btnRemote.removeEventListener('click', handleRemote);
             modal.classList.remove('active');
             await this.forceDownload(false);
+            this.updateStatus(true);
             UI.showToast('已使用云端数据', 'success');
             if (typeof App !== 'undefined' && App.refresh) App.refresh();
         };
