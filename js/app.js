@@ -97,7 +97,7 @@ const App = {
             this.importData();
         });
 
-        // 清空历史
+        // 清空历史（设置页）
         document.getElementById('btn-clear-history')?.addEventListener('click', async () => {
             const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？');
             if (!confirmed) return;
@@ -107,6 +107,37 @@ const App = {
 
             Store.clearHistory();
             HistoryModule.refresh();
+            StatsModule.refresh();
+            FirebaseSync.sync();
+            UI.showToast('历史记录已清空', 'success');
+        });
+
+        // 清空历史（历史页）
+        document.getElementById('btn-clear-history-page')?.addEventListener('click', async () => {
+            const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？');
+            if (!confirmed) return;
+
+            const verified = await UI.requirePassword();
+            if (!verified) return;
+
+            Store.clearHistory();
+            HistoryModule.refresh();
+            StatsModule.refresh();
+            FirebaseSync.sync();
+            UI.showToast('历史记录已清空', 'success');
+        });
+
+        // 清空历史（统计页）
+        document.getElementById('btn-clear-stats')?.addEventListener('click', async () => {
+            const confirmed = await UI.confirm('清空历史', '确定要清空所有历史记录吗？这将影响统计数据。');
+            if (!confirmed) return;
+
+            const verified = await UI.requirePassword();
+            if (!verified) return;
+
+            Store.clearHistory();
+            HistoryModule.refresh();
+            StatsModule.refresh();
             FirebaseSync.sync();
             UI.showToast('历史记录已清空', 'success');
         });
