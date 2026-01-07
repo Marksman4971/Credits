@@ -374,7 +374,15 @@ const FirebaseSync = {
             return;
         }
 
-        const self = this;  // 保存 this 引用
+        const self = this;
+
+        // 设置状态为待处理
+        const statusEl = document.getElementById('connection-status');
+        if (statusEl) {
+            statusEl.className = 'connection-status status-syncing';
+            statusEl.querySelector('.status-icon').textContent = '⚠';
+            statusEl.querySelector('.status-text').textContent = '待处理';
+        }
 
         // 计算积分差异摘要
         const user77Name = typeof Utils !== 'undefined' ? Utils.getUserName('user77') : '77';
@@ -397,7 +405,6 @@ const FirebaseSync = {
             remoteSummary.innerHTML = `${user77Name}: ${remoteUser77}分 | ${user11Name}: ${remoteUser11}分`;
         }
 
-        // 显示最近修改原因
         if (reasonEl) {
             const recentHistory = (remoteData.history || []).slice(0, 1);
             if (recentHistory.length > 0) {
@@ -409,21 +416,26 @@ const FirebaseSync = {
             }
         }
 
-        // 移除旧的事件监听器（克隆节点）
-        const btnLocal = modal.querySelector('.sync-btn-local');
-        const btnRemote = modal.querySelector('.sync-btn-remote');
+        // 获取按钮并克隆（移除旧事件）
+        const oldBtnLocal = modal.querySelector('.sync-btn-local');
+        const oldBtnRemote = modal.querySelector('.sync-btn-remote');
 
-        const newBtnLocal = btnLocal.cloneNode(true);
-        const newBtnRemote = btnRemote.cloneNode(true);
-        btnLocal.parentNode.replaceChild(newBtnLocal, btnLocal);
-        btnRemote.parentNode.replaceChild(newBtnRemote, btnRemote);
+        if (!oldBtnLocal || !oldBtnRemote) {
+            console.error('[Firebase] 同步按钮未找到');
+            self.updateStatus(true);
+            return;
+        }
 
-        // 绑定新的事件 - 直接强制覆盖
-        newBtnLocal.addEventListener('click', async function() {
+        const btnLocal = oldBtnLocal.cloneNode(true);
+        const btnRemote = oldBtnRemote.cloneNode(true);
+        oldBtnLocal.parentNode.replaceChild(btnLocal, oldBtnLocal);
+        oldBtnRemote.parentNode.replaceChild(btnRemote, oldBtnRemote);
+
+        // 本地按钮点击
+        btnLocal.onclick = async function() {
             modal.classList.remove('active');
             self.showSyncingStatus();
 
-            // 直接上传本地数据到云端
             try {
                 const syncTime = new Date().toISOString();
                 Store.data.system = Store.data.system || {};
@@ -436,20 +448,20 @@ const FirebaseSync = {
                 self.lastSyncTime = new Date();
                 self.updateSyncTimeDisplay();
                 UI.showToast('已使用本地数据覆盖云端', 'success');
-            } catch (e) {
-                console.error('上传失败:', e);
-                UI.showToast('上传失败: ' + e.message, 'error');
+            } catch (err) {
+                console.error('[Firebase] 上传失败:', err);
+                UI.showToast('上传失败', 'error');
+            } finally {
+                self.updateStatus(true);
+                if (typeof App !== 'undefined' && App.refresh) App.refresh();
             }
+        };
 
-            self.updateStatus(true);
-            if (typeof App !== 'undefined' && App.refresh) App.refresh();
-        });
-
-        newBtnRemote.addEventListener('click', async function() {
+        // 云端按钮点击
+        btnRemote.onclick = async function() {
             modal.classList.remove('active');
             self.showSyncingStatus();
 
-            // 直接下载云端数据覆盖本地
             try {
                 const dataRef = self.ref(self.database, 'pointSystemV3');
                 const snapshot = await self.get(dataRef);
@@ -459,18 +471,17 @@ const FirebaseSync = {
                     self.lastSyncTime = new Date();
                     self.updateSyncTimeDisplay();
                     UI.showToast('已使用云端数据覆盖本地', 'success');
-                    if (typeof App !== 'undefined' && App.refresh) App.refresh();
                 } else {
                     UI.showToast('云端无数据', 'warning');
                 }
-            } catch (e) {
-                console.error('下载失败:', e);
-                UI.showToast('下载失败: ' + e.message, 'error');
+            } catch (err) {
+                console.error('[Firebase] 下载失败:', err);
+                UI.showToast('下载失败', 'error');
+            } finally {
+                self.updateStatus(true);
+                if (typeof App !== 'undefined' && App.refresh) App.refresh();
             }
-
-            self.updateStatus(true);
-            if (typeof App !== 'undefined' && App.refresh) App.refresh();
-        });
+        };
 
         // 显示弹窗
         modal.classList.add('active');
