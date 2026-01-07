@@ -49,13 +49,54 @@ const FirebaseSync = {
         this.get = fb.get;
         this.onValue = fb.onValue;
 
-        // 监听连接状态（不自动同步）
+        // 监听连接状态
         this.monitorConnection();
 
         // 绑定同步按钮事件
         this.bindSyncButtons();
 
         console.log('[Firebase] 初始化完成');
+
+        // 页面加载时自动同步一次
+        setTimeout(() => {
+            this.autoSyncOnLoad();
+        }, 500);
+    },
+
+    /**
+     * 页面加载时自动同步
+     */
+    async autoSyncOnLoad() {
+        if (!this.isOnline || !this.database) {
+            console.log('[Firebase] 离线或未初始化，跳过自动同步');
+            return;
+        }
+
+        try {
+            const dataRef = this.ref(this.database, 'pointSystemV3');
+            const snapshot = await this.get(dataRef);
+            const remoteData = snapshot.val();
+
+            if (!remoteData) {
+                console.log('[Firebase] 云端无数据');
+                return;
+            }
+
+            // 检测冲突
+            const conflict = this.detectConflict(Store.data, remoteData);
+
+            if (conflict.hasConflict) {
+                // 有冲突，显示简化的选择弹窗
+                this.cachedRemoteData = remoteData;
+                this.showSimpleConflictModal(Store.data, remoteData, conflict);
+            } else {
+                // 无冲突，静默合并
+                await this.mergeAndSync(remoteData);
+                console.log('[Firebase] 自动同步完成（无冲突）');
+            }
+        } catch (e) {
+            console.error('[Firebase] 自动同步失败:', e);
+        }
     },
 
     /**
@@ -338,7 +379,71 @@ const FirebaseSync = {
         if (modal) {
             modal.classList.remove('active');
         }
+        const simpleModal = document.getElementById('modal-sync-simple');
+        if (simpleModal) {
+            simpleModal.classList.remove('active');
+        }
         this.conflictResolveCallback = null;
+    },
+
+    /**
+     * 显示简化的 Anki 风格冲突弹窗
+     */
+    showSimpleConflictModal(localData, remoteData, conflict) {
+        const modal = document.getElementById('modal-sync-simple');
+        if (!modal) {
+            // 如果简化弹窗不存在，使用原来的弹窗
+            this.showConflictModal(localData, remoteData, conflict);
+            return;
+        }
+
+        // 计算积分差异摘要
+        const user77Name = typeof Utils !== 'undefined' ? Utils.getUserName('user77') : '77';
+        const user11Name = typeof Utils !== 'undefined' ? Utils.getUserName('user11') : '11';
+
+        const localUser77 = localData.points?.user77?.total || 0;
+        const localUser11 = localData.points?.user11?.total || 0;
+        const remoteUser77 = remoteData.points?.user77?.total || 0;
+        const remoteUser11 = remoteData.points?.user11?.total || 0;
+
+        // 更新弹窗内容
+        const localSummary = modal.querySelector('.sync-local-summary');
+        const remoteSummary = modal.querySelector('.sync-remote-summary');
+
+        if (localSummary) {
+            localSummary.innerHTML = `${user77Name}: ${localUser77}分 | ${user11Name}: ${localUser11}分`;
+        }
+        if (remoteSummary) {
+            remoteSummary.innerHTML = `${user77Name}: ${remoteUser77}分 | ${user11Name}: ${remoteUser11}分`;
+        }
+
+        // 绑定按钮事件（使用一次性事件）
+        const btnLocal = modal.querySelector('.sync-btn-local');
+        const btnRemote = modal.querySelector('.sync-btn-remote');
+
+        const handleLocal = async () => {
+            btnLocal.removeEventListener('click', handleLocal);
+            btnRemote.removeEventListener('click', handleRemote);
+            modal.classList.remove('active');
+            await this.forceUpload(false);
+            UI.showToast('已使用本地数据', 'success');
+            if (typeof App !== 'undefined' && App.refresh) App.refresh();
+        };
+
+        const handleRemote = async () => {
+            btnLocal.removeEventListener('click', handleLocal);
+            btnRemote.removeEventListener('click', handleRemote);
+            modal.classList.remove('active');
+            await this.forceDownload(false);
+            UI.showToast('已使用云端数据', 'success');
+            if (typeof App !== 'undefined' && App.refresh) App.refresh();
+        };
+
+        if (btnLocal) btnLocal.addEventListener('click', handleLocal);
+        if (btnRemote) btnRemote.addEventListener('click', handleRemote);
+
+        // 显示弹窗
+        modal.classList.add('active');
     },
 
     /**

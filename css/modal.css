@@ -428,3 +428,117 @@
         width: 100%;
     }
 }
+
+/* ===== Anki 风格简化同步弹窗 ===== */
+.modal-sync-simple {
+    max-width: 340px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.modal-sync-simple .modal-header {
+    padding: 18px 20px;
+    text-align: center;
+}
+
+.modal-sync-simple .modal-header h3 {
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.sync-simple-body {
+    padding: 20px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sync-simple-desc {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+/* 大按钮选择 */
+.sync-choice-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 20px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.sync-choice-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.sync-choice-btn:active {
+    transform: translateY(0);
+}
+
+.sync-btn-local {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+}
+
+.sync-btn-local:hover {
+    background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+    border-color: #2e7d32;
+}
+
+.sync-btn-remote {
+    border-color: #2196f3;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+}
+
+.sync-btn-remote:hover {
+    background: linear-gradient(135deg, #bbdefb, #90caf9);
+    border-color: #1565c0;
+}
+
+.sync-icon {
+    font-size: 2em;
+    line-height: 1;
+}
+
+.sync-label {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sync-local-summary,
+.sync-remote-summary {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* 手机端优化 */
+@media (max-width: 480px) {
+    .modal-sync-simple {
+        max-width: 100%;
+        margin: 10px;
+    }
+
+    .sync-choice-btn {
+        padding: 25px 15px;
+    }
+
+    .sync-icon {
+        font-size: 2.5em;
+    }
+
+    .sync-label {
+        font-size: 1.2em;
+    }
+}
