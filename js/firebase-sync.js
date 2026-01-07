@@ -418,41 +418,58 @@ const FirebaseSync = {
         btnLocal.parentNode.replaceChild(newBtnLocal, btnLocal);
         btnRemote.parentNode.replaceChild(newBtnRemote, btnRemote);
 
-        // 绑定新的事件 - 直接调用设置页的同步函数
+        // 绑定新的事件 - 直接强制覆盖
         newBtnLocal.addEventListener('click', async function() {
             modal.classList.remove('active');
-            self.showSyncingStatus();  // 立即设置为同步中
+            self.showSyncingStatus();
 
+            // 直接上传本地数据到云端
             try {
-                const success = await self.forceUpload(false);
-                if (success) {
-                    UI.showToast('已使用本地数据', 'success');
-                }
+                const syncTime = new Date().toISOString();
+                Store.data.system = Store.data.system || {};
+                Store.data.system.lastSync = syncTime;
+
+                const dataRef = self.ref(self.database, 'pointSystemV3');
+                await self.set(dataRef, Store.data);
+
+                Store.save();
+                self.lastSyncTime = new Date();
+                self.updateSyncTimeDisplay();
+                UI.showToast('已使用本地数据覆盖云端', 'success');
             } catch (e) {
                 console.error('上传失败:', e);
-                UI.showToast('上传失败', 'error');
-            } finally {
-                self.updateStatus(true);
-                if (typeof App !== 'undefined' && App.refresh) App.refresh();
+                UI.showToast('上传失败: ' + e.message, 'error');
             }
+
+            self.updateStatus(true);
+            if (typeof App !== 'undefined' && App.refresh) App.refresh();
         });
 
         newBtnRemote.addEventListener('click', async function() {
             modal.classList.remove('active');
-            self.showSyncingStatus();  // 立即设置为同步中
+            self.showSyncingStatus();
 
+            // 直接下载云端数据覆盖本地
             try {
-                const success = await self.forceDownload(false);
-                if (success) {
-                    UI.showToast('已使用云端数据', 'success');
+                const dataRef = self.ref(self.database, 'pointSystemV3');
+                const snapshot = await self.get(dataRef);
+
+                if (snapshot.exists()) {
+                    Store.replaceData(snapshot.val());
+                    self.lastSyncTime = new Date();
+                    self.updateSyncTimeDisplay();
+                    UI.showToast('已使用云端数据覆盖本地', 'success');
+                    if (typeof App !== 'undefined' && App.refresh) App.refresh();
+                } else {
+                    UI.showToast('云端无数据', 'warning');
                 }
             } catch (e) {
                 console.error('下载失败:', e);
-                UI.showToast('下载失败', 'error');
-            } finally {
-                self.updateStatus(true);
-                if (typeof App !== 'undefined' && App.refresh) App.refresh();
+                UI.showToast('下载失败: ' + e.message, 'error');
             }
+
+            self.updateStatus(true);
+            if (typeof App !== 'undefined' && App.refresh) App.refresh();
         });
 
         // 显示弹窗

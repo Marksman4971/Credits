@@ -1041,10 +1041,15 @@ const BountyModule = {
      * @returns {Array}
      */
     getActiveBounties() {
-        return Store.getBounties().filter(b =>
-            b.status === CONFIG.BOUNTY_STATUS.OPEN ||
-            b.status === CONFIG.BOUNTY_STATUS.TAKEN
-        ).slice(0, 5);
+        return Store.getBounties().filter(b => {
+            // 周期任务：两人都完成则不显示
+            if (b.period && this.isPeriodicTaskFullyCompleted(b)) {
+                return false;
+            }
+            // 只显示待接取或进行中的任务
+            return b.status === CONFIG.BOUNTY_STATUS.OPEN ||
+                   b.status === CONFIG.BOUNTY_STATUS.TAKEN;
+        }).slice(0, 5);
     },
 
     /**
