@@ -418,31 +418,49 @@ const FirebaseSync = {
         btnLocal.parentNode.replaceChild(newBtnLocal, btnLocal);
         btnRemote.parentNode.replaceChild(newBtnRemote, btnRemote);
 
-        // 绑定新的事件
+        // 绑定新的事件 - 直接调用设置页的同步函数
         newBtnLocal.addEventListener('click', async function() {
             modal.classList.remove('active');
+            // 调用设置页的本地覆盖云端按钮功能
+            const btn = newBtnLocal;
+            btn.disabled = true;
+            btn.textContent = '处理中...';
+
             try {
-                await self.forceUpload(false);
-                self.updateStatus(true);
-                UI.showToast('已使用本地数据', 'success');
+                const success = await self.forceUpload(false);
+                if (success) {
+                    UI.showToast('已使用本地数据', 'success');
+                }
             } catch (e) {
                 console.error('上传失败:', e);
+                UI.showToast('上传失败', 'error');
+            } finally {
                 self.updateStatus(true);
+                btn.disabled = false;
+                if (typeof App !== 'undefined' && App.refresh) App.refresh();
             }
-            if (typeof App !== 'undefined' && App.refresh) App.refresh();
         });
 
         newBtnRemote.addEventListener('click', async function() {
             modal.classList.remove('active');
+            // 调用设置页的云端覆盖本地按钮功能
+            const btn = newBtnRemote;
+            btn.disabled = true;
+            btn.textContent = '处理中...';
+
             try {
-                await self.forceDownload(false);
-                self.updateStatus(true);
-                UI.showToast('已使用云端数据', 'success');
+                const success = await self.forceDownload(false);
+                if (success) {
+                    UI.showToast('已使用云端数据', 'success');
+                }
             } catch (e) {
                 console.error('下载失败:', e);
+                UI.showToast('下载失败', 'error');
+            } finally {
                 self.updateStatus(true);
+                btn.disabled = false;
+                if (typeof App !== 'undefined' && App.refresh) App.refresh();
             }
-            if (typeof App !== 'undefined' && App.refresh) App.refresh();
         });
 
         // 显示弹窗
@@ -488,19 +506,24 @@ const FirebaseSync = {
      * @param {object} remoteData
      */
     async resolveConflict(choice, remoteData) {
-        switch (choice) {
-            case 'local':
-                await this.forceUpload(false);
-                UI.showToast('已使用本地数据覆盖云端', 'success');
-                break;
-            case 'remote':
-                await this.forceDownload(false);
-                UI.showToast('已使用云端数据覆盖本地', 'success');
-                break;
-            case 'merge':
-                await this.mergeAndSync(remoteData);
-                UI.showToast('已智能合并数据', 'success');
-                break;
+        try {
+            switch (choice) {
+                case 'local':
+                    await this.forceUpload(false);
+                    UI.showToast('已使用本地数据覆盖云端', 'success');
+                    break;
+                case 'remote':
+                    await this.forceDownload(false);
+                    UI.showToast('已使用云端数据覆盖本地', 'success');
+                    break;
+                case 'merge':
+                    await this.mergeAndSync(remoteData);
+                    UI.showToast('已智能合并数据', 'success');
+                    break;
+            }
+        } finally {
+            // 无论成功失败都更新状态为在线
+            this.updateStatus(true);
         }
 
         // 刷新页面显示

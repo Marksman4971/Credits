@@ -352,7 +352,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: 10px 12px;
     background: rgba(255, 255, 255, 0.7);
     border-radius: var(--radius-md);
     font-size: 0.9rem;
@@ -361,22 +361,29 @@
 .periodic-task-status-item .task-name {
     font-weight: 500;
     color: var(--text-primary);
+    flex: 1;
 }
 
-.periodic-task-status-item .task-status {
+.task-user-statuses {
+    display: flex;
+    gap: 8px;
+}
+
+.user-status {
     font-size: 0.8rem;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 10px;
+    font-weight: 600;
 }
 
-.periodic-task-status-item.pending .task-status {
-    background: #ffcdd2;
-    color: #c62828;
+.user-status.done {
+    background: #d4edda;
+    color: #28a745;
 }
 
-.periodic-task-status-item.in-progress .task-status {
-    background: #fff3e0;
-    color: #e65100;
+.user-status.pending {
+    background: #f8d7da;
+    color: #dc3545;
 }
 
 .periodic-status-footer {

@@ -358,30 +358,33 @@
 }
 
 .periodic-task-item {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
+    padding: 15px;
     background: var(--bg-light);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
+    margin-bottom: 10px;
+}
+
+.periodic-task-item:last-child {
+    margin-bottom: 0;
 }
 
 .periodic-task-item:hover {
     background: #f3f4f6;
 }
 
-.periodic-task-info {
-    flex: 1;
-    min-width: 150px;
+.periodic-task-header {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .periodic-task-title {
-    font-weight: 500;
+    flex: 1;
+    font-weight: 600;
     color: var(--text-primary);
 }
 
@@ -391,14 +394,53 @@
     font-size: 0.9em;
 }
 
-.periodic-task-status {
-    flex-shrink: 0;
+.periodic-delete-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0 !important;
+    font-size: 1em !important;
+    border-radius: 50%;
+    opacity: 0.5;
 }
 
-.periodic-task-actions {
+.periodic-task-item:hover .periodic-delete-btn {
+    opacity: 1;
+}
+
+/* 两人状态显示 */
+.periodic-task-users {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.periodic-user-status {
     display: flex;
-    gap: 6px;
-    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.periodic-user-status .user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.periodic-user-status.completed {
+    background: #d4edda;
+    border: 1px solid #28a745;
+}
+
+.periodic-user-status.completed .status-text {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.periodic-user-status.pending {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
 }
 
 .empty-periodic {
@@ -435,13 +477,7 @@
 
 /* 手机端优化 */
 @media (max-width: 480px) {
-    .periodic-task-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .periodic-task-actions {
-        width: 100%;
-        justify-content: flex-end;
+    .periodic-task-users {
+        grid-template-columns: 1fr;
     }
 }

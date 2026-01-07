@@ -657,15 +657,23 @@ const BountyModule = {
     },
 
     /**
+     * 检查周期任务是否两人都已完成
+     */
+    isPeriodicTaskFullyCompleted(task) {
+        const completedBy = task.completedBy || [];
+        return completedBy.includes('user77') && completedBy.includes('user11');
+    },
+
+    /**
      * 渲染周期任务
      */
     renderPeriodicTasks() {
         const bounties = Store.getBounties();
 
-        // 按周期分类
-        const weekTasks = bounties.filter(b => b.period === 'week' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
-        const monthTasks = bounties.filter(b => b.period === 'month' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
-        const yearTasks = bounties.filter(b => b.period === 'year' && b.status !== CONFIG.BOUNTY_STATUS.SETTLED);
+        // 按周期分类（只过滤两人都完成的任务）
+        const weekTasks = bounties.filter(b => b.period === 'week' && !this.isPeriodicTaskFullyCompleted(b));
+        const monthTasks = bounties.filter(b => b.period === 'month' && !this.isPeriodicTaskFullyCompleted(b));
+        const yearTasks = bounties.filter(b => b.period === 'year' && !this.isPeriodicTaskFullyCompleted(b));
 
         // 渲染各列表
         this.renderPeriodicList('week-task-list', weekTasks);
@@ -690,15 +698,14 @@ const BountyModule = {
 
         container.innerHTML = tasks.map(task => `
             <div class="periodic-task-item" data-id="${task.id}">
-                <div class="periodic-task-info">
+                <div class="periodic-task-header">
                     <span class="periodic-task-title">${task.title}</span>
                     <span class="periodic-task-points">+${task.points}分</span>
+                    <button class="btn btn-danger btn-xs periodic-delete-btn" data-action="delete">×</button>
                 </div>
-                <div class="periodic-task-status">
-                    ${this.getPeriodicTaskStatus(task)}
-                </div>
-                <div class="periodic-task-actions">
-                    ${this.getPeriodicTaskActions(task)}
+                <div class="periodic-task-users">
+                    ${this.renderPeriodicUserStatus(task, 'user77')}
+                    ${this.renderPeriodicUserStatus(task, 'user11')}
                 </div>
             </div>
         `).join('');
@@ -708,29 +715,27 @@ const BountyModule = {
     },
 
     /**
-     * 获取周期任务状态显示
+     * 渲染单个用户的周期任务状态
      */
-    getPeriodicTaskStatus(task) {
-        if (task.status === CONFIG.BOUNTY_STATUS.TAKEN) {
-            return `<span class="status-badge status-taken">${Utils.getUserName(task.assignee)} 进行中</span>`;
-        }
-        return `<span class="status-badge status-open">待接取</span>`;
-    },
+    renderPeriodicUserStatus(task, userId) {
+        const userName = Utils.getUserName(userId);
+        const completedBy = task.completedBy || [];
+        const isCompleted = completedBy.includes(userId);
 
-    /**
-     * 获取周期任务操作按钮
-     */
-    getPeriodicTaskActions(task) {
-        if (task.status === CONFIG.BOUNTY_STATUS.TAKEN) {
+        if (isCompleted) {
             return `
-                <button class="btn btn-success btn-xs" data-action="complete">完成</button>
-                <button class="btn btn-secondary btn-xs" data-action="abandon">放弃</button>
-                <button class="btn btn-danger btn-xs" data-action="delete">删除</button>
+                <div class="periodic-user-status completed">
+                    <span class="user-name">${userName}</span>
+                    <span class="status-text">✓ 已完成</span>
+                </div>
             `;
         }
+
         return `
-            <button class="btn btn-warning btn-xs" data-action="assign">接取</button>
-            <button class="btn btn-danger btn-xs" data-action="delete">删除</button>
+            <div class="periodic-user-status pending">
+                <span class="user-name">${userName}</span>
+                <button class="btn btn-success btn-xs" data-action="complete-periodic" data-user="${userId}">完成</button>
+            </div>
         `;
     },
 
@@ -740,14 +745,65 @@ const BountyModule = {
     bindPeriodicTaskEvents(container) {
         container.querySelectorAll('.periodic-task-item').forEach(item => {
             const bountyId = item.dataset.id;
-            item.querySelectorAll('[data-action]').forEach(btn => {
+
+            // 删除按钮
+            item.querySelectorAll('[data-action="delete"]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const action = btn.dataset.action;
-                    this.handleAction(action, bountyId);
+                    this.delete(bountyId);
+                });
+            });
+
+            // 完成按钮（带用户参数）
+            item.querySelectorAll('[data-action="complete-periodic"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const userId = btn.dataset.user;
+                    this.completePeriodicTask(bountyId, userId);
                 });
             });
         });
+    },
+
+    /**
+     * 完成周期任务（单个用户）
+     */
+    async completePeriodicTask(bountyId, userId) {
+        const bounty = Store.getBounties().find(b => b.id === bountyId);
+        if (!bounty) return;
+
+        const userName = Utils.getUserName(userId);
+        const confirmed = await UI.confirm(
+            '完成任务',
+            `确认 ${userName} 完成了「${bounty.title}」？\n将获得 ${bounty.points} 积分。`
+        );
+        if (!confirmed) return;
+
+        // 发放积分
+        Store.addPoints(userId, bounty.points);
+
+        // 更新完成状态
+        const completedBy = bounty.completedBy || [];
+        if (!completedBy.includes(userId)) {
+            completedBy.push(userId);
+        }
+        Store.updateBounty(bountyId, { completedBy });
+
+        // 记录历史
+        Store.addHistory({
+            type: 'bounty',
+            action: 'complete',
+            title: `完成${this.getPeriodLabel(bounty.period)}任务: ${bounty.title}`,
+            detail: `${userName} 获得 ${bounty.points} 积分`,
+            user: userId,
+            points: bounty.points
+        });
+
+        this.refresh();
+        App.refreshHome();
+        UI.updateScoreDisplay();
+        FirebaseSync.sync();
+        UI.showToast(`${userName} 完成任务，获得 ${bounty.points} 积分！`, 'success');
     },
 
     /**
@@ -774,10 +830,10 @@ const BountyModule = {
             monthDeadline.textContent = `${monthEnd.getMonth() + 1}/${monthEnd.getDate()} 截止`;
         }
 
-        // 年任务：12/31截止
+        // 年任务：年末截止
         const yearDeadline = document.getElementById('year-deadline');
         if (yearDeadline) {
-            yearDeadline.textContent = '12/31 截止';
+            yearDeadline.textContent = '年末截止';
         }
     },
 

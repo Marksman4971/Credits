@@ -11,7 +11,7 @@
  * - 周期任务：
  *   - 周任务：周日23:00检查，未完成扣10分
  *   - 月任务：月末23:00检查，未完成扣30分
- *   - 年任务：12/31 23:00检查，未完成扣70分
+ *   - 年任务：年末 23:00检查，未完成扣70分
  */
 
 const admin = require('firebase-admin');
@@ -98,7 +98,7 @@ function isLastDayOfMonth() {
 }
 
 /**
- * 检查是否是12月31日（需要检查年任务）
+ * 检查是否是年末（12月31日，需要检查年任务）
  */
 function isYearEnd() {
     const now = getChinaTime();
@@ -226,64 +226,49 @@ async function checkAndApplyPenalty() {
         // 检查周任务（周日）
         if (isSunday() || forceMode) {
             const weekId = getCurrentWeekId();
-            const weekTasks = bounties.filter(b => b.period === 'week' && b.status !== 'settled');
+            const weekTasks = bounties.filter(b => b.period === 'week');
 
             if (weekTasks.length > 0) {
                 console.log(`\n检查周任务 (${weekId}):`);
 
                 for (const task of weekTasks) {
-                    // 检查是否已经处罚过这个周期
-                    const checkKey = `week_${task.id}_${weekId}`;
-                    if (!forceMode && periodicPenaltyData[checkKey]) {
-                        console.log(`  - 任务「${task.title}」本周已检查`);
-                        continue;
-                    }
-
+                    const completedBy = task.completedBy || [];
                     const penalty = CONFIG.PERIODIC_PENALTY.week;
-                    const targetUser = task.assignee || null;
 
-                    if (targetUser) {
-                        // 已分配：扣分给接取人
-                        const currentPoints = data.points?.[targetUser] || { total: 0 };
-                        data.points[targetUser].total = Math.max(0, currentPoints.total - penalty);
+                    // 检查每个用户
+                    for (const userId of CONFIG.USERS) {
+                        const checkKey = `week_${task.id}_${userId}_${weekId}`;
+                        if (!forceMode && periodicPenaltyData[checkKey]) {
+                            continue;
+                        }
 
-                        const userName = targetUser === 'user77' ? '77' : '11';
-                        history.unshift({
-                            id: `periodic_${Date.now()}_${targetUser}`,
-                            time: new Date().toISOString(),
-                            type: 'penalty',
-                            action: 'periodic',
-                            title: `周任务未完成`,
-                            detail: `${userName} 未完成「${task.title}」`,
-                            user: targetUser,
-                            points: -penalty
-                        });
-                        console.log(`  - 「${task.title}」未完成，${userName} 扣 ${penalty} 分`);
-                    } else {
-                        // 未分配：两人都扣分
-                        for (const userId of CONFIG.USERS) {
+                        const userName = userId === 'user77' ? '77' : '11';
+
+                        if (completedBy.includes(userId)) {
+                            console.log(`  - 「${task.title}」${userName} 已完成`);
+                        } else {
+                            // 未完成，扣分
                             const currentPoints = data.points?.[userId] || { total: 0 };
                             data.points[userId] = data.points[userId] || { total: 0 };
                             data.points[userId].total = Math.max(0, currentPoints.total - penalty);
 
-                            const userName = userId === 'user77' ? '77' : '11';
                             history.unshift({
-                                id: `periodic_${Date.now()}_${userId}`,
+                                id: `periodic_${Date.now()}_${userId}_${task.id}`,
                                 time: new Date().toISOString(),
                                 type: 'penalty',
                                 action: 'periodic',
                                 title: `周任务未完成`,
-                                detail: `「${task.title}」无人接取，${userName} 扣分`,
+                                detail: `${userName} 未完成「${task.title}」`,
                                 user: userId,
                                 points: -penalty
                             });
+                            console.log(`  - 「${task.title}」${userName} 未完成，扣 ${penalty} 分`);
+                            hasChanges = true;
                         }
-                        console.log(`  - 「${task.title}」无人接取，两人各扣 ${penalty} 分`);
-                    }
 
-                    // 标记已检查
-                    periodicPenaltyData[checkKey] = today;
-                    hasChanges = true;
+                        // 标记已检查
+                        periodicPenaltyData[checkKey] = today;
+                    }
                 }
             }
         }
@@ -291,121 +276,93 @@ async function checkAndApplyPenalty() {
         // 检查月任务（月末）
         if (isLastDayOfMonth() || forceMode) {
             const monthId = getCurrentMonthId();
-            const monthTasks = bounties.filter(b => b.period === 'month' && b.status !== 'settled');
+            const monthTasks = bounties.filter(b => b.period === 'month');
 
             if (monthTasks.length > 0) {
                 console.log(`\n检查月任务 (${monthId}):`);
 
                 for (const task of monthTasks) {
-                    const checkKey = `month_${task.id}_${monthId}`;
-                    if (!forceMode && periodicPenaltyData[checkKey]) {
-                        console.log(`  - 任务「${task.title}」本月已检查`);
-                        continue;
-                    }
-
+                    const completedBy = task.completedBy || [];
                     const penalty = CONFIG.PERIODIC_PENALTY.month;
-                    const targetUser = task.assignee || null;
 
-                    if (targetUser) {
-                        const currentPoints = data.points?.[targetUser] || { total: 0 };
-                        data.points[targetUser].total = Math.max(0, currentPoints.total - penalty);
+                    for (const userId of CONFIG.USERS) {
+                        const checkKey = `month_${task.id}_${userId}_${monthId}`;
+                        if (!forceMode && periodicPenaltyData[checkKey]) {
+                            continue;
+                        }
 
-                        const userName = targetUser === 'user77' ? '77' : '11';
-                        history.unshift({
-                            id: `periodic_${Date.now()}_${targetUser}`,
-                            time: new Date().toISOString(),
-                            type: 'penalty',
-                            action: 'periodic',
-                            title: `月任务未完成`,
-                            detail: `${userName} 未完成「${task.title}」`,
-                            user: targetUser,
-                            points: -penalty
-                        });
-                        console.log(`  - 「${task.title}」未完成，${userName} 扣 ${penalty} 分`);
-                    } else {
-                        for (const userId of CONFIG.USERS) {
+                        const userName = userId === 'user77' ? '77' : '11';
+
+                        if (completedBy.includes(userId)) {
+                            console.log(`  - 「${task.title}」${userName} 已完成`);
+                        } else {
                             const currentPoints = data.points?.[userId] || { total: 0 };
                             data.points[userId] = data.points[userId] || { total: 0 };
                             data.points[userId].total = Math.max(0, currentPoints.total - penalty);
 
-                            const userName = userId === 'user77' ? '77' : '11';
                             history.unshift({
-                                id: `periodic_${Date.now()}_${userId}`,
+                                id: `periodic_${Date.now()}_${userId}_${task.id}`,
                                 time: new Date().toISOString(),
                                 type: 'penalty',
                                 action: 'periodic',
                                 title: `月任务未完成`,
-                                detail: `「${task.title}」无人接取，${userName} 扣分`,
+                                detail: `${userName} 未完成「${task.title}」`,
                                 user: userId,
                                 points: -penalty
                             });
+                            console.log(`  - 「${task.title}」${userName} 未完成，扣 ${penalty} 分`);
+                            hasChanges = true;
                         }
-                        console.log(`  - 「${task.title}」无人接取，两人各扣 ${penalty} 分`);
-                    }
 
-                    periodicPenaltyData[checkKey] = today;
-                    hasChanges = true;
+                        periodicPenaltyData[checkKey] = today;
+                    }
                 }
             }
         }
 
-        // 检查年任务（12月31日）
+        // 检查年任务（年末）
         if (isYearEnd() || forceMode) {
             const yearId = getCurrentYearId();
-            const yearTasks = bounties.filter(b => b.period === 'year' && b.status !== 'settled');
+            const yearTasks = bounties.filter(b => b.period === 'year');
 
             if (yearTasks.length > 0) {
                 console.log(`\n检查年任务 (${yearId}):`);
 
                 for (const task of yearTasks) {
-                    const checkKey = `year_${task.id}_${yearId}`;
-                    if (!forceMode && periodicPenaltyData[checkKey]) {
-                        console.log(`  - 任务「${task.title}」本年已检查`);
-                        continue;
-                    }
-
+                    const completedBy = task.completedBy || [];
                     const penalty = CONFIG.PERIODIC_PENALTY.year;
-                    const targetUser = task.assignee || null;
 
-                    if (targetUser) {
-                        const currentPoints = data.points?.[targetUser] || { total: 0 };
-                        data.points[targetUser].total = Math.max(0, currentPoints.total - penalty);
+                    for (const userId of CONFIG.USERS) {
+                        const checkKey = `year_${task.id}_${userId}_${yearId}`;
+                        if (!forceMode && periodicPenaltyData[checkKey]) {
+                            continue;
+                        }
 
-                        const userName = targetUser === 'user77' ? '77' : '11';
-                        history.unshift({
-                            id: `periodic_${Date.now()}_${targetUser}`,
-                            time: new Date().toISOString(),
-                            type: 'penalty',
-                            action: 'periodic',
-                            title: `年任务未完成`,
-                            detail: `${userName} 未完成「${task.title}」`,
-                            user: targetUser,
-                            points: -penalty
-                        });
-                        console.log(`  - 「${task.title}」未完成，${userName} 扣 ${penalty} 分`);
-                    } else {
-                        for (const userId of CONFIG.USERS) {
+                        const userName = userId === 'user77' ? '77' : '11';
+
+                        if (completedBy.includes(userId)) {
+                            console.log(`  - 「${task.title}」${userName} 已完成`);
+                        } else {
                             const currentPoints = data.points?.[userId] || { total: 0 };
                             data.points[userId] = data.points[userId] || { total: 0 };
                             data.points[userId].total = Math.max(0, currentPoints.total - penalty);
 
-                            const userName = userId === 'user77' ? '77' : '11';
                             history.unshift({
-                                id: `periodic_${Date.now()}_${userId}`,
+                                id: `periodic_${Date.now()}_${userId}_${task.id}`,
                                 time: new Date().toISOString(),
                                 type: 'penalty',
                                 action: 'periodic',
                                 title: `年任务未完成`,
-                                detail: `「${task.title}」无人接取，${userName} 扣分`,
+                                detail: `${userName} 未完成「${task.title}」`,
                                 user: userId,
                                 points: -penalty
                             });
+                            console.log(`  - 「${task.title}」${userName} 未完成，扣 ${penalty} 分`);
+                            hasChanges = true;
                         }
-                        console.log(`  - 「${task.title}」无人接取，两人各扣 ${penalty} 分`);
-                    }
 
-                    periodicPenaltyData[checkKey] = today;
-                    hasChanges = true;
+                        periodicPenaltyData[checkKey] = today;
+                    }
                 }
             }
         }

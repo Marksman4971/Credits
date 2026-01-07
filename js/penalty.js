@@ -321,18 +321,24 @@ const PenaltyModule = {
     },
 
     /**
-     * 渲染周期任务项
+     * 渲染周期任务项（显示两人各自的状态）
      */
     renderPeriodicTaskItem(task) {
-        const statusClass = task.status === CONFIG.BOUNTY_STATUS.TAKEN ? 'in-progress' : 'pending';
-        const statusText = task.status === CONFIG.BOUNTY_STATUS.TAKEN
-            ? `${Utils.getUserName(task.assignee)} 进行中`
-            : '待接取';
+        const completedBy = task.completedBy || [];
+        const user77Done = completedBy.includes('user77');
+        const user11Done = completedBy.includes('user11');
 
         return `
-            <div class="periodic-task-status-item ${statusClass}">
+            <div class="periodic-task-status-item">
                 <span class="task-name">${task.title}</span>
-                <span class="task-status">${statusText}</span>
+                <div class="task-user-statuses">
+                    <span class="user-status ${user77Done ? 'done' : 'pending'}">
+                        77: ${user77Done ? '✓' : '✗'}
+                    </span>
+                    <span class="user-status ${user11Done ? 'done' : 'pending'}">
+                        11: ${user11Done ? '✓' : '✗'}
+                    </span>
+                </div>
             </div>
         `;
     },
@@ -361,7 +367,7 @@ const PenaltyModule = {
     },
 
     /**
-     * 获取本年截止时间（12/31 23:59:59）
+     * 获取本年截止时间（年末 23:59:59）
      */
     getYearDeadline() {
         const now = new Date();
