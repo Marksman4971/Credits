@@ -171,6 +171,15 @@ const FirebaseSync = {
             btnDownload.addEventListener('click', () => this.confirmForceDownload());
         }
 
+        // 刷新对比按钮
+        const btnRefreshCompare = document.getElementById('btn-refresh-compare');
+        if (btnRefreshCompare) {
+            btnRefreshCompare.addEventListener('click', () => this.refreshCompare());
+        }
+
+        // 页面加载时刷新对比
+        setTimeout(() => this.refreshCompare(), 1000);
+
         // 冲突弹窗按钮
         this.bindConflictButtons();
     },
@@ -851,6 +860,67 @@ const FirebaseSync = {
         const timeEl = document.getElementById('last-sync-time');
         if (timeEl && this.lastSyncTime) {
             timeEl.textContent = Utils.formatDate(this.lastSyncTime, 'HH:mm:ss');
+        }
+    },
+
+    /**
+     * 刷新本地与云端数据对比
+     */
+    async refreshCompare() {
+        // 更新本地数据显示
+        const localPoints77 = Store.data.points?.user77?.total || 0;
+        const localPoints11 = Store.data.points?.user11?.total || 0;
+        const localHistoryCount = (Store.data.history || []).length;
+
+        document.getElementById('local-points-77').textContent = localPoints77;
+        document.getElementById('local-points-11').textContent = localPoints11;
+        document.getElementById('local-history-count').textContent = localHistoryCount + ' 条';
+
+        // 获取云端数据
+        const remote77El = document.getElementById('remote-points-77');
+        const remote11El = document.getElementById('remote-points-11');
+        const remoteHistoryEl = document.getElementById('remote-history-count');
+
+        if (!this.isOnline || !this.database) {
+            remote77El.textContent = '离线';
+            remote11El.textContent = '离线';
+            remoteHistoryEl.textContent = '离线';
+            return;
+        }
+
+        try {
+            remote77El.textContent = '...';
+            remote11El.textContent = '...';
+            remoteHistoryEl.textContent = '...';
+
+            const dataRef = this.ref(this.database, 'pointSystemV3');
+            const snapshot = await this.get(dataRef);
+            const remoteData = snapshot.val();
+
+            if (remoteData) {
+                const remotePoints77 = remoteData.points?.user77?.total || 0;
+                const remotePoints11 = remoteData.points?.user11?.total || 0;
+                const remoteHistoryCount = (remoteData.history || []).length;
+
+                remote77El.textContent = remotePoints77;
+                remote11El.textContent = remotePoints11;
+                remoteHistoryEl.textContent = remoteHistoryCount + ' 条';
+
+                // 高亮差异
+                remote77El.classList.toggle('diff', remotePoints77 !== localPoints77);
+                remote11El.classList.toggle('diff', remotePoints11 !== localPoints11);
+                document.getElementById('local-points-77').classList.toggle('diff', remotePoints77 !== localPoints77);
+                document.getElementById('local-points-11').classList.toggle('diff', remotePoints11 !== localPoints11);
+            } else {
+                remote77El.textContent = '无数据';
+                remote11El.textContent = '无数据';
+                remoteHistoryEl.textContent = '无数据';
+            }
+        } catch (e) {
+            console.error('[Firebase] 获取云端数据失败:', e);
+            remote77El.textContent = '错误';
+            remote11El.textContent = '错误';
+            remoteHistoryEl.textContent = '错误';
         }
     },
 

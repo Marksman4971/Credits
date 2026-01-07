@@ -521,6 +521,30 @@
                     <div class="sync-info" id="sync-info">
                         <p>上次同步: <span id="last-sync-time">--</span></p>
                     </div>
+                    <!-- 本地与云端数据对比 -->
+                    <div class="sync-compare" id="sync-compare">
+                        <div class="sync-compare-row">
+                            <span class="compare-label"></span>
+                            <span class="compare-header">本地</span>
+                            <span class="compare-header">云端</span>
+                        </div>
+                        <div class="sync-compare-row">
+                            <span class="compare-label">77 积分</span>
+                            <span class="compare-value" id="local-points-77">--</span>
+                            <span class="compare-value" id="remote-points-77">--</span>
+                        </div>
+                        <div class="sync-compare-row">
+                            <span class="compare-label">11 积分</span>
+                            <span class="compare-value" id="local-points-11">--</span>
+                            <span class="compare-value" id="remote-points-11">--</span>
+                        </div>
+                        <div class="sync-compare-row">
+                            <span class="compare-label">历史记录</span>
+                            <span class="compare-value" id="local-history-count">--</span>
+                            <span class="compare-value" id="remote-history-count">--</span>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" id="btn-refresh-compare" style="margin-top: 10px;">刷新对比</button>
+                    </div>
                     <div class="sync-controls">
                         <button class="btn btn-secondary" id="btn-sync-upload">本地→云端</button>
                         <button class="btn btn-secondary" id="btn-sync-download">云端→本地</button>

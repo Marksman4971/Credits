@@ -402,3 +402,45 @@
 .empty-state-text {
     font-size: 1.1em;
 }
+
+/* ========== 同步数据对比 ========== */
+.sync-compare {
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.sync-compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sync-compare-row:last-of-type {
+    border-bottom: none;
+}
+
+.compare-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.compare-header {
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.compare-value {
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.compare-value.diff {
+    color: #dc3545;
+    font-weight: 700;
+}
