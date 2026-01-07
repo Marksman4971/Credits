@@ -416,9 +416,19 @@ const FirebaseSync = {
      * @param {object} remoteData
      */
     async mergeAndSync(remoteData) {
-        // 合并 penalty 数据（VPS 脚本写入的）
+        // 合并 penalty 数据（VPS 脚本写入的）- 优先使用远程数据
         if (remoteData.penalty) {
-            Store.data.penalty = this.mergeObjects(Store.data.penalty, remoteData.penalty);
+            Store.data.penalty = Store.data.penalty || {};
+            for (const userId of ['user77', 'user11']) {
+                const localPenalty = Store.data.penalty[userId] || {};
+                const remotePenalty = remoteData.penalty[userId] || {};
+
+                // 如果远程有更新的结算记录，使用远程数据
+                if (remotePenalty.lastCheckDate &&
+                    (!localPenalty.lastCheckDate || remotePenalty.lastCheckDate >= localPenalty.lastCheckDate)) {
+                    Store.data.penalty[userId] = remotePenalty;
+                }
+            }
         }
 
         // 合并 history（去重）
@@ -428,15 +438,30 @@ const FirebaseSync = {
             Store.data.history = this.mergeHistory(localHistory, remoteHistory);
         }
 
-        // 合并 points（取较大值）
+        // 合并 points - 检测是否有 VPS 惩罚扣分
         if (remoteData.points) {
             for (const userId of ['user77', 'user11']) {
                 if (remoteData.points[userId] && Store.data.points[userId]) {
-                    if (remoteData.points[userId].total > Store.data.points[userId].total) {
+                    const localPenalty = Store.data.penalty?.[userId] || {};
+                    const remotePenalty = remoteData.penalty?.[userId] || {};
+
+                    // 如果远程有更新的惩罚记录，接受远程积分（即使更低，因为是被扣分了）
+                    const remotePenaltyIsNewer = remotePenalty.lastCheckDate &&
+                        (!localPenalty.lastCheckDate || remotePenalty.lastCheckDate > localPenalty.lastCheckDate);
+
+                    if (remotePenaltyIsNewer) {
+                        // VPS 执行了扣分，接受远程积分
+                        console.log(`[Firebase] 检测到 ${userId} 有新的惩罚记录，接受远程积分`);
                         Store.data.points[userId].total = remoteData.points[userId].total;
-                    }
-                    if (remoteData.points[userId].weekly > Store.data.points[userId].weekly) {
                         Store.data.points[userId].weekly = remoteData.points[userId].weekly;
+                    } else {
+                        // 无新惩罚，取较大值（正常加分场景）
+                        if (remoteData.points[userId].total > Store.data.points[userId].total) {
+                            Store.data.points[userId].total = remoteData.points[userId].total;
+                        }
+                        if (remoteData.points[userId].weekly > Store.data.points[userId].weekly) {
+                            Store.data.points[userId].weekly = remoteData.points[userId].weekly;
+                        }
                     }
                 }
             }

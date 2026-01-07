@@ -1,0 +1,32 @@
+// Syncthing ignore patterns
+// See https://docs.syncthing.net/users/ignoring.html
+
+// Dependencies - these cause massive sync conflicts
+node_modules
+
+// Syncthing conflict files (ignore them from syncing)
+*.sync-conflict-*
+*/.sync-conflict-*
+
+// Firebase service account keys (SENSITIVE - should not be synced!)
+serviceAccountKey.json
+**/serviceAccountKey*.json
+
+// Log files
+*.log
+log.txt
+**/log.txt
+
+// OS generated files
+.DS_Store
+Thumbs.db
+
+// IDE files
+.idea
+.vscode
+*.swp
+*.swo
+
+// Build output
+dist
+build
