@@ -83,7 +83,9 @@ const App = {
         Store.clearHistory();
         HistoryModule.refresh();
         StatsModule.refresh();
-        FirebaseSync.sync();
+
+        // 强制上传清空后的数据到云端（不要用 sync，否则会把云端数据下载回来）
+        await FirebaseSync.forceUpload(false);
         UI.showToast('历史记录已清空', 'success');
     },
 
