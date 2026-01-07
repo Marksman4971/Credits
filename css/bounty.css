@@ -312,8 +312,7 @@
 /* ========== 周期任务样式 ========== */
 
 .periodic-bounty-section {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 2px solid #f59e0b;
+    /* 与其他悬赏区块保持一致 */
 }
 
 .periodic-tasks-container {
@@ -345,9 +344,9 @@
 
 .periodic-deadline {
     font-size: 0.85em;
-    color: #d97706;
+    color: var(--text-secondary);
     font-weight: 500;
-    background: #fef3c7;
+    background: var(--bg-light);
     padding: 4px 10px;
     border-radius: 12px;
 }

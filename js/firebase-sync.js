@@ -421,10 +421,7 @@ const FirebaseSync = {
         // 绑定新的事件 - 直接调用设置页的同步函数
         newBtnLocal.addEventListener('click', async function() {
             modal.classList.remove('active');
-            // 调用设置页的本地覆盖云端按钮功能
-            const btn = newBtnLocal;
-            btn.disabled = true;
-            btn.textContent = '处理中...';
+            self.showSyncingStatus();  // 立即设置为同步中
 
             try {
                 const success = await self.forceUpload(false);
@@ -436,17 +433,13 @@ const FirebaseSync = {
                 UI.showToast('上传失败', 'error');
             } finally {
                 self.updateStatus(true);
-                btn.disabled = false;
                 if (typeof App !== 'undefined' && App.refresh) App.refresh();
             }
         });
 
         newBtnRemote.addEventListener('click', async function() {
             modal.classList.remove('active');
-            // 调用设置页的云端覆盖本地按钮功能
-            const btn = newBtnRemote;
-            btn.disabled = true;
-            btn.textContent = '处理中...';
+            self.showSyncingStatus();  // 立即设置为同步中
 
             try {
                 const success = await self.forceDownload(false);
@@ -458,7 +451,6 @@ const FirebaseSync = {
                 UI.showToast('下载失败', 'error');
             } finally {
                 self.updateStatus(true);
-                btn.disabled = false;
                 if (typeof App !== 'undefined' && App.refresh) App.refresh();
             }
         });
