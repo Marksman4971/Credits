@@ -265,28 +265,30 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .settings-card-header h3 {
-    font-size: 1.1em;
+    font-size: 1.05em;
     font-weight: 600;
     margin: 0;
+    color: var(--text-primary);
 }
 
 .sync-time {
     font-size: 0.85em;
-    opacity: 0.9;
+    color: var(--text-muted);
 }
 
 .sync-time #last-sync-time {
     font-weight: 600;
+    color: var(--primary-color);
 }
 
 .settings-card-body {
-    padding: 20px 24px;
+    padding: 20px;
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -296,10 +298,10 @@
 .btn-setting {
     flex: 1;
     min-width: 120px;
-    padding: 14px 24px;
+    padding: 12px 20px;
     border: none;
     border-radius: var(--radius-md);
-    font-size: 0.95em;
+    font-size: 0.9em;
     font-weight: 500;
     font-family: inherit;
     cursor: pointer;
@@ -308,42 +310,47 @@
 
 .btn-setting:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
+    filter: brightness(1.05);
 }
 
 .btn-setting:active {
     transform: translateY(0);
 }
 
-/* 按钮颜色 */
+/* 按钮颜色 - 柔和色调 */
 .btn-setting-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #7c8ce8;
     color: white;
 }
 
 .btn-setting-success {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: #5cb85c;
     color: white;
 }
 
 .btn-setting-info {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: #5bc0de;
     color: white;
 }
 
 .btn-setting-warning {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: #f0ad4e;
     color: white;
 }
 
 .btn-setting-danger {
-    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    background: #d9534f;
     color: white;
 }
 
 /* 危险操作卡片 */
 .settings-card-danger .settings-card-header {
-    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    background: #fff5f5;
+}
+
+.settings-card-danger .settings-card-header h3 {
+    color: #d9534f;
 }
 
 /* ========== 统计表格 ========== */
