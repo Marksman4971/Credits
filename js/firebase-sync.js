@@ -1,7 +1,12 @@
 /**
- * firebase-sync.js - Firebase 云同步
+ * firebase-sync.js - Firebase 云同步 (简化版)
  *
- * 负责与 Firebase 实时数据库的同步
+ * 同步逻辑：
+ * - 打开网页：检测云端是否有变动，有变动则云端覆盖本地
+ * - 本地修改：延迟2秒自动同步到云端
+ * - 关闭/刷新：用 sendBeacon 发送最新数据到云端
+ * - 手动点击：立即本地覆盖云端
+ * - 冲突时：弹窗让用户选择
  */
 
 const FirebaseSync = {
@@ -10,32 +15,32 @@ const FirebaseSync = {
     ref: null,
     set: null,
     get: null,
-    onValue: null,
 
     // 状态
     isOnline: false,
     isSyncing: false,
     lastSyncTime: null,
-    unsubscribe: null,
-    lastUploadTime: null,  // 记录最后上传时间，用于防止循环
+    syncTimeout: null,
 
-    // 冲突解决回调
-    conflictResolveCallback: null,
+    // 本地修改标志
+    localModified: false,
 
-    // 缓存的远程数据（用于冲突比较）
-    cachedRemoteData: null,
+    // 本地记录的上次同步时间戳
+    localLastSync: null,
 
     /**
      * 初始化 Firebase
      */
     async init() {
+        // 加载本地记录的同步时间
+        this.loadLocalSyncTime();
+
         // 等待 Firebase SDK 加载
         if (!window.firebaseDb) {
             console.log('[Firebase] 等待 SDK 加载...');
             await this.waitForFirebase();
         }
 
-        // 检查 SDK 是否成功加载
         if (!window.firebaseDb) {
             console.error('[Firebase] SDK 加载失败');
             this.updateStatus(false);
@@ -47,61 +52,41 @@ const FirebaseSync = {
         this.ref = fb.ref;
         this.set = fb.set;
         this.get = fb.get;
-        this.onValue = fb.onValue;
 
         // 监听连接状态
         this.monitorConnection();
 
-        // 绑定同步按钮事件
-        this.bindSyncButtons();
+        // 绑定事件
+        this.bindEvents();
 
         console.log('[Firebase] 初始化完成');
 
-        // 页面加载时自动同步一次
+        // 页面加载时检测云端变动
         setTimeout(() => {
-            this.autoSyncOnLoad();
+            this.checkCloudChangesOnLoad();
         }, 500);
     },
 
     /**
-     * 页面加载时自动同步
+     * 加载本地记录的同步时间
      */
-    async autoSyncOnLoad() {
-        if (!this.isOnline || !this.database) {
-            console.log('[Firebase] 离线或未初始化，跳过自动同步');
-            return;
-        }
-
-        try {
-            const dataRef = this.ref(this.database, 'pointSystemV3');
-            const snapshot = await this.get(dataRef);
-            const remoteData = snapshot.val();
-
-            if (!remoteData) {
-                console.log('[Firebase] 云端无数据');
-                return;
-            }
-
-            // 检测冲突
-            const conflict = this.detectConflict(Store.data, remoteData);
-
-            if (conflict.hasConflict) {
-                // 有冲突，显示简化的选择弹窗
-                this.cachedRemoteData = remoteData;
-                this.showSimpleConflictModal(Store.data, remoteData, conflict);
-            } else {
-                // 无冲突，静默合并
-                await this.mergeAndSync(remoteData);
-                console.log('[Firebase] 自动同步完成（无冲突）');
-            }
-        } catch (e) {
-            console.error('[Firebase] 自动同步失败:', e);
+    loadLocalSyncTime() {
+        const saved = localStorage.getItem('firebase_last_sync');
+        if (saved) {
+            this.localLastSync = saved;
         }
     },
 
     /**
+     * 保存同步时间到本地
+     */
+    saveLocalSyncTime(time) {
+        this.localLastSync = time;
+        localStorage.setItem('firebase_last_sync', time);
+    },
+
+    /**
      * 等待 Firebase SDK 加载完成
-     * @returns {Promise}
      */
     waitForFirebase() {
         return new Promise((resolve) => {
@@ -114,7 +99,6 @@ const FirebaseSync = {
                 resolve();
             }, { once: true });
 
-            // 超时处理
             setTimeout(() => {
                 console.warn('[Firebase] SDK 加载超时');
                 resolve();
@@ -126,17 +110,13 @@ const FirebaseSync = {
      * 监听连接状态
      */
     monitorConnection() {
-        // 监听浏览器在线状态
         window.addEventListener('online', () => this.updateStatus(true));
         window.addEventListener('offline', () => this.updateStatus(false));
-
-        // 初始状态
         this.updateStatus(navigator.onLine);
     },
 
     /**
-     * 更新连接状态（不自动同步）
-     * @param {boolean} online
+     * 更新连接状态
      */
     updateStatus(online) {
         this.isOnline = online;
@@ -150,233 +130,290 @@ const FirebaseSync = {
     },
 
     /**
-     * 绑定同步按钮事件
+     * 绑定事件
      */
-    bindSyncButtons() {
-        // 智能同步按钮
-        const btnSync = document.getElementById('btn-sync');
-        if (btnSync) {
-            btnSync.addEventListener('click', () => this.smartSync());
+    bindEvents() {
+        // 云朵同步按钮
+        const btnCloudSync = document.getElementById('btn-cloud-sync');
+        if (btnCloudSync) {
+            btnCloudSync.addEventListener('click', () => this.manualUpload());
         }
 
-        // 本地→云端按钮
+        // 页面关闭/刷新时用 sendBeacon 同步
+        window.addEventListener('beforeunload', () => {
+            this.syncBeforeUnload();
+        });
+
+        // 监听 Store 数据变化
+        if (typeof Store !== 'undefined') {
+            Store.addListener((action) => {
+                if (action === 'save') {
+                    this.onDataModified();
+                }
+            });
+        }
+
+        // 旧按钮兼容
         const btnUpload = document.getElementById('btn-sync-upload');
         if (btnUpload) {
-            btnUpload.addEventListener('click', () => this.confirmForceUpload());
+            btnUpload.addEventListener('click', () => this.manualUpload());
         }
 
-        // 云端→本地按钮
         const btnDownload = document.getElementById('btn-sync-download');
         if (btnDownload) {
-            btnDownload.addEventListener('click', () => this.confirmForceDownload());
-        }
-
-        // 冲突弹窗按钮
-        this.bindConflictButtons();
-    },
-
-    /**
-     * 绑定冲突弹窗按钮
-     */
-    bindConflictButtons() {
-        const btnCancel = document.getElementById('conflict-cancel');
-        const btnUseLocal = document.getElementById('conflict-use-local');
-        const btnUseRemote = document.getElementById('conflict-use-remote');
-
-        if (btnCancel) {
-            btnCancel.addEventListener('click', () => {
-                this.hideConflictModal();
-                if (this.conflictResolveCallback) {
-                    this.conflictResolveCallback('cancel');
-                }
-            });
-        }
-
-        if (btnUseLocal) {
-            btnUseLocal.addEventListener('click', () => {
-                this.hideConflictModal();
-                if (this.conflictResolveCallback) {
-                    this.conflictResolveCallback('local');
-                }
-            });
-        }
-
-        if (btnUseRemote) {
-            btnUseRemote.addEventListener('click', () => {
-                this.hideConflictModal();
-                if (this.conflictResolveCallback) {
-                    this.conflictResolveCallback('remote');
-                }
-            });
+            btnDownload.addEventListener('click', () => this.manualDownload());
         }
     },
 
     /**
-     * 智能同步 - 检测冲突并让用户选择
+     * 页面加载时检测云端变动
      */
-    async smartSync() {
-        if (!this.isOnline || !this.database || !this.get || !this.ref) {
-            UI.showToast('无法连接到服务器', 'error');
-            return false;
+    async checkCloudChangesOnLoad() {
+        if (!this.isOnline || !this.database) {
+            console.log('[Firebase] 离线或未初始化，跳过检测');
+            return;
         }
-
-        if (this.isSyncing) {
-            UI.showToast('正在同步中...', 'info');
-            return false;
-        }
-
-        this.isSyncing = true;
-        this.showSyncingStatus();
 
         try {
-            // 1. 获取远程数据
             const dataRef = this.ref(this.database, 'pointSystemV3');
             const snapshot = await this.get(dataRef);
             const remoteData = snapshot.val();
 
-            // 2. 如果远程没有数据，直接上传本地数据
             if (!remoteData) {
-                await this.forceUpload(false);
-                UI.showToast('云端无数据，已上传本地数据', 'success');
-                this.isSyncing = false;
-                this.updateStatus(true);
-                return true;
+                console.log('[Firebase] 云端无数据');
+                return;
             }
 
-            // 3. 检测冲突
-            const conflict = this.detectConflict(Store.data, remoteData);
+            const remoteLastSync = remoteData.system?.lastSync;
+            const localLastSync = this.localLastSync;
 
-            if (conflict.hasConflict) {
-                // 显示冲突弹窗
-                this.cachedRemoteData = remoteData;
-                const choice = await this.showConflictModal(Store.data, remoteData, conflict);
+            console.log('[Firebase] 云端同步时间:', remoteLastSync);
+            console.log('[Firebase] 本地记录时间:', localLastSync);
 
-                if (choice === 'cancel') {
-                    this.isSyncing = false;
-                    this.updateStatus(true);
-                    return false;
+            // 判断云端是否有变动
+            const cloudChanged = remoteLastSync && (!localLastSync || remoteLastSync > localLastSync);
+
+            if (cloudChanged) {
+                // 云端有变动，检测是否有冲突
+                if (this.localModified) {
+                    // 本地也有修改，显示冲突弹窗
+                    this.showConflictModal(remoteData);
+                } else {
+                    // 本地没有修改，直接用云端覆盖本地
+                    console.log('[Firebase] 云端有变动，覆盖本地');
+                    Store.replaceData(remoteData);
+                    this.saveLocalSyncTime(remoteLastSync);
+                    this.lastSyncTime = new Date();
+                    UI.showToast('已从云端同步最新数据', 'success');
+                    if (typeof App !== 'undefined' && App.refresh) {
+                        App.refresh();
+                    }
                 }
-
-                await this.resolveConflict(choice, remoteData);
             } else {
-                // 无冲突，执行智能合并
-                await this.mergeAndSync(remoteData);
-                UI.showToast('同步成功', 'success');
+                console.log('[Firebase] 云端无变动');
             }
-
-            this.isSyncing = false;
-            this.updateStatus(true);
-            return true;
         } catch (e) {
-            console.error('[Firebase] 智能同步失败:', e);
-            UI.showToast('同步失败: ' + e.message, 'error');
-            this.isSyncing = false;
-            this.updateStatus(true);
-            return false;
+            console.error('[Firebase] 检测云端变动失败:', e);
         }
     },
 
     /**
-     * 检测数据冲突
-     * @param {object} localData
-     * @param {object} remoteData
-     * @returns {object} 冲突信息
+     * 数据修改后的处理
      */
-    detectConflict(localData, remoteData) {
-        const conflict = {
-            hasConflict: false,
-            points: { user77: false, user11: false },
-            details: []
-        };
+    onDataModified() {
+        this.localModified = true;
 
-        // 只检查总积分差异
-        for (const userId of ['user77', 'user11']) {
-            const localPoints = localData.points?.[userId]?.total || 0;
-            const remotePoints = remoteData.points?.[userId]?.total || 0;
+        // 延迟 2 秒自动同步
+        if (this.syncTimeout) {
+            clearTimeout(this.syncTimeout);
+        }
+        this.syncTimeout = setTimeout(() => {
+            this.autoSync();
+        }, 2000);
+    },
 
-            if (localPoints !== remotePoints) {
-                conflict.hasConflict = true;
-                conflict.points[userId] = true;
-                conflict.details.push({
-                    field: userId,
-                    local: localPoints,
-                    remote: remotePoints,
-                    diff: localPoints - remotePoints
-                });
-            }
+    /**
+     * 自动同步（延迟触发）
+     */
+    async autoSync() {
+        if (!this.isOnline || !this.database || this.isSyncing) {
+            return;
         }
 
-        return conflict;
+        try {
+            await this.uploadToCloud(false);
+            console.log('[Firebase] 自动同步完成');
+        } catch (e) {
+            console.error('[Firebase] 自动同步失败:', e);
+        }
+    },
+
+    /**
+     * 手动上传（点击云朵按钮）
+     */
+    async manualUpload() {
+        if (!this.isOnline || !this.database) {
+            UI.showToast('无法连接到服务器', 'error');
+            return;
+        }
+
+        if (this.isSyncing) {
+            UI.showToast('正在同步中...', 'info');
+            return;
+        }
+
+        try {
+            await this.uploadToCloud(true);
+            UI.showToast('已同步到云端', 'success');
+        } catch (e) {
+            console.error('[Firebase] 上传失败:', e);
+            UI.showToast('同步失败: ' + e.message, 'error');
+        }
+    },
+
+    /**
+     * 手动下载
+     */
+    async manualDownload() {
+        if (!this.isOnline || !this.database) {
+            UI.showToast('无法连接到服务器', 'error');
+            return;
+        }
+
+        if (this.isSyncing) {
+            UI.showToast('正在同步中...', 'info');
+            return;
+        }
+
+        try {
+            await this.downloadFromCloud(true);
+            UI.showToast('已从云端同步', 'success');
+        } catch (e) {
+            console.error('[Firebase] 下载失败:', e);
+            UI.showToast('同步失败: ' + e.message, 'error');
+        }
+    },
+
+    /**
+     * 上传数据到云端
+     */
+    async uploadToCloud(showStatus = true) {
+        this.isSyncing = true;
+
+        if (showStatus) {
+            this.showSyncingStatus();
+            this.setSyncButtonLoading(true);
+        }
+
+        try {
+            const syncTime = new Date().toISOString();
+            Store.data.system = Store.data.system || {};
+            Store.data.system.lastSync = syncTime;
+
+            const dataRef = this.ref(this.database, 'pointSystemV3');
+            await this.set(dataRef, Store.data);
+
+            // 保存数据但不触发再次同步
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(Store.data));
+
+            this.saveLocalSyncTime(syncTime);
+            this.localModified = false;
+            this.lastSyncTime = new Date();
+
+            console.log('[Firebase] 上传成功');
+        } finally {
+            this.isSyncing = false;
+            if (showStatus) {
+                this.updateStatus(true);
+                this.setSyncButtonLoading(false);
+            }
+        }
+    },
+
+    /**
+     * 从云端下载数据
+     */
+    async downloadFromCloud(showStatus = true) {
+        this.isSyncing = true;
+
+        if (showStatus) {
+            this.showSyncingStatus();
+            this.setSyncButtonLoading(true);
+        }
+
+        try {
+            const dataRef = this.ref(this.database, 'pointSystemV3');
+            const snapshot = await this.get(dataRef);
+
+            if (snapshot.exists()) {
+                const remoteData = snapshot.val();
+                Store.replaceData(remoteData);
+
+                const remoteLastSync = remoteData.system?.lastSync;
+                if (remoteLastSync) {
+                    this.saveLocalSyncTime(remoteLastSync);
+                }
+
+                this.localModified = false;
+                this.lastSyncTime = new Date();
+
+                if (typeof App !== 'undefined' && App.refresh) {
+                    App.refresh();
+                }
+
+                console.log('[Firebase] 下载成功');
+            } else {
+                UI.showToast('云端无数据', 'warning');
+            }
+        } finally {
+            this.isSyncing = false;
+            if (showStatus) {
+                this.updateStatus(true);
+                this.setSyncButtonLoading(false);
+            }
+        }
+    },
+
+    /**
+     * 页面关闭前用 sendBeacon 同步
+     */
+    syncBeforeUnload() {
+        if (!this.isOnline || !this.localModified) {
+            return;
+        }
+
+        try {
+            const syncTime = new Date().toISOString();
+            Store.data.system = Store.data.system || {};
+            Store.data.system.lastSync = syncTime;
+
+            // 使用 sendBeacon 发送数据
+            const url = `https://points-reward-system-default-rtdb.firebaseio.com/pointSystemV3.json`;
+            const data = JSON.stringify(Store.data);
+
+            navigator.sendBeacon(url, data);
+
+            // 保存同步时间
+            localStorage.setItem('firebase_last_sync', syncTime);
+
+            console.log('[Firebase] sendBeacon 已发送');
+        } catch (e) {
+            console.error('[Firebase] sendBeacon 失败:', e);
+        }
     },
 
     /**
      * 显示冲突弹窗
-     * @param {object} localData
-     * @param {object} remoteData
-     * @param {object} conflict
-     * @returns {Promise<string>} 用户选择
      */
-    showConflictModal(localData, remoteData, conflict) {
-        return new Promise((resolve) => {
-            this.conflictResolveCallback = resolve;
-
-            // 填充本地数据
-            const localContainer = document.getElementById('conflict-local-data');
-            if (localContainer) {
-                localContainer.innerHTML = this.formatDataForDisplay(localData, 'local', conflict);
-            }
-
-            // 填充远程数据
-            const remoteContainer = document.getElementById('conflict-remote-data');
-            if (remoteContainer) {
-                remoteContainer.innerHTML = this.formatDataForDisplay(remoteData, 'remote', conflict);
-            }
-
-            // 显示弹窗
-            const modal = document.getElementById('modal-sync-conflict');
-            if (modal) {
-                modal.classList.add('active');
-            }
-
-            // 更新状态为等待用户选择
-            const statusEl = document.getElementById('connection-status');
-            if (statusEl) {
-                statusEl.className = 'connection-status status-syncing';
-                statusEl.querySelector('.status-icon').textContent = '⚠';
-                statusEl.querySelector('.status-text').textContent = '待处理';
-            }
-        });
-    },
-
-    /**
-     * 隐藏冲突弹窗
-     */
-    hideConflictModal() {
-        const modal = document.getElementById('modal-sync-conflict');
-        if (modal) {
-            modal.classList.remove('active');
-        }
-        const simpleModal = document.getElementById('modal-sync-simple');
-        if (simpleModal) {
-            simpleModal.classList.remove('active');
-        }
-        this.conflictResolveCallback = null;
-    },
-
-    /**
-     * 显示简化的 Anki 风格冲突弹窗
-     */
-    showSimpleConflictModal(localData, remoteData, conflict) {
+    showConflictModal(remoteData) {
         const modal = document.getElementById('modal-sync-simple');
         if (!modal) {
-            // 如果简化弹窗不存在，使用原来的弹窗
-            this.showConflictModal(localData, remoteData, conflict);
+            // 直接用云端数据
+            Store.replaceData(remoteData);
             return;
         }
 
-        const self = this;
-
-        // 设置状态为待处理
+        // 更新状态
         const statusEl = document.getElementById('connection-status');
         if (statusEl) {
             statusEl.className = 'connection-status status-syncing';
@@ -384,19 +421,18 @@ const FirebaseSync = {
             statusEl.querySelector('.status-text').textContent = '待处理';
         }
 
-        // 计算积分差异摘要
+        // 计算积分摘要
         const user77Name = typeof Utils !== 'undefined' ? Utils.getUserName('user77') : '77';
         const user11Name = typeof Utils !== 'undefined' ? Utils.getUserName('user11') : '11';
 
-        const localUser77 = localData.points?.user77?.total || 0;
-        const localUser11 = localData.points?.user11?.total || 0;
+        const localUser77 = Store.data.points?.user77?.total || 0;
+        const localUser11 = Store.data.points?.user11?.total || 0;
         const remoteUser77 = remoteData.points?.user77?.total || 0;
         const remoteUser11 = remoteData.points?.user11?.total || 0;
 
         // 更新弹窗内容
         const localSummary = modal.querySelector('.sync-local-summary');
         const remoteSummary = modal.querySelector('.sync-remote-summary');
-        const reasonEl = modal.querySelector('.sync-reason');
 
         if (localSummary) {
             localSummary.innerHTML = `${user77Name}: ${localUser77}分 | ${user11Name}: ${localUser11}分`;
@@ -405,431 +441,44 @@ const FirebaseSync = {
             remoteSummary.innerHTML = `${user77Name}: ${remoteUser77}分 | ${user11Name}: ${remoteUser11}分`;
         }
 
-        if (reasonEl) {
-            const recentHistory = (remoteData.history || []).slice(0, 1);
-            if (recentHistory.length > 0) {
-                const latest = recentHistory[0];
-                reasonEl.innerHTML = `最近变更: ${latest.title || latest.detail || '未知'}`;
-                reasonEl.style.display = 'block';
-            } else {
-                reasonEl.style.display = 'none';
-            }
-        }
+        // 绑定按钮事件
+        const self = this;
 
-        // 获取按钮并克隆（移除旧事件）
         const oldBtnLocal = modal.querySelector('.sync-btn-local');
         const oldBtnRemote = modal.querySelector('.sync-btn-remote');
 
-        if (!oldBtnLocal || !oldBtnRemote) {
-            console.error('[Firebase] 同步按钮未找到');
-            self.updateStatus(true);
-            return;
+        if (oldBtnLocal) {
+            const btnLocal = oldBtnLocal.cloneNode(true);
+            oldBtnLocal.parentNode.replaceChild(btnLocal, oldBtnLocal);
+
+            btnLocal.onclick = async function() {
+                modal.classList.remove('active');
+                await self.uploadToCloud(true);
+                UI.showToast('已使用本地数据覆盖云端', 'success');
+                if (typeof App !== 'undefined' && App.refresh) App.refresh();
+            };
         }
 
-        const btnLocal = oldBtnLocal.cloneNode(true);
-        const btnRemote = oldBtnRemote.cloneNode(true);
-        oldBtnLocal.parentNode.replaceChild(btnLocal, oldBtnLocal);
-        oldBtnRemote.parentNode.replaceChild(btnRemote, oldBtnRemote);
+        if (oldBtnRemote) {
+            const btnRemote = oldBtnRemote.cloneNode(true);
+            oldBtnRemote.parentNode.replaceChild(btnRemote, oldBtnRemote);
 
-        // 本地按钮点击
-        btnLocal.onclick = async function() {
-            modal.classList.remove('active');
-            self.showSyncingStatus();
-
-            try {
-                const syncTime = new Date().toISOString();
-                Store.data.system = Store.data.system || {};
-                Store.data.system.lastSync = syncTime;
-
-                const dataRef = self.ref(self.database, 'pointSystemV3');
-                await self.set(dataRef, Store.data);
-
-                Store.save();
-                self.lastSyncTime = new Date();
-                self.updateSyncTimeDisplay();
-                UI.showToast('已使用本地数据覆盖云端', 'success');
-            } catch (err) {
-                console.error('[Firebase] 上传失败:', err);
-                UI.showToast('上传失败', 'error');
-            } finally {
-                self.updateStatus(true);
-                if (typeof App !== 'undefined' && App.refresh) App.refresh();
-            }
-        };
-
-        // 云端按钮点击
-        btnRemote.onclick = async function() {
-            modal.classList.remove('active');
-            self.showSyncingStatus();
-
-            try {
-                const dataRef = self.ref(self.database, 'pointSystemV3');
-                const snapshot = await self.get(dataRef);
-
-                if (snapshot.exists()) {
-                    Store.replaceData(snapshot.val());
-                    self.lastSyncTime = new Date();
-                    self.updateSyncTimeDisplay();
-                    UI.showToast('已使用云端数据覆盖本地', 'success');
-                } else {
-                    UI.showToast('云端无数据', 'warning');
+            btnRemote.onclick = async function() {
+                modal.classList.remove('active');
+                Store.replaceData(remoteData);
+                const remoteLastSync = remoteData.system?.lastSync;
+                if (remoteLastSync) {
+                    self.saveLocalSyncTime(remoteLastSync);
                 }
-            } catch (err) {
-                console.error('[Firebase] 下载失败:', err);
-                UI.showToast('下载失败', 'error');
-            } finally {
+                self.localModified = false;
                 self.updateStatus(true);
+                UI.showToast('已使用云端数据覆盖本地', 'success');
                 if (typeof App !== 'undefined' && App.refresh) App.refresh();
-            }
-        };
+            };
+        }
 
         // 显示弹窗
         modal.classList.add('active');
-    },
-
-    /**
-     * 格式化数据用于显示
-     * @param {object} data
-     * @param {string} side - 'local' 或 'remote'
-     * @param {object} conflict
-     * @returns {string} HTML
-     */
-    formatDataForDisplay(data, side, conflict) {
-        const user77Name = typeof Utils !== 'undefined' ? Utils.getUserName('user77') : '77';
-        const user11Name = typeof Utils !== 'undefined' ? Utils.getUserName('user11') : '11';
-
-        const user77Total = data.points?.user77?.total || 0;
-        const user11Total = data.points?.user11?.total || 0;
-
-        const highlight77 = conflict.points.user77 ? 'highlight' : '';
-        const highlight11 = conflict.points.user11 ? 'highlight' : '';
-
-        return `
-            <div class="conflict-data-item">
-                <span class="label">${user77Name}</span>
-                <span class="value ${highlight77}">${user77Total} 分</span>
-            </div>
-            <div class="conflict-data-item">
-                <span class="label">${user11Name}</span>
-                <span class="value ${highlight11}">${user11Total} 分</span>
-            </div>
-            <div class="conflict-data-item">
-                <span class="label">历史记录</span>
-                <span class="value">${(data.history || []).length} 条</span>
-            </div>
-        `;
-    },
-
-    /**
-     * 解决冲突
-     * @param {string} choice - 'local', 'remote', 'merge'
-     * @param {object} remoteData
-     */
-    async resolveConflict(choice, remoteData) {
-        try {
-            switch (choice) {
-                case 'local':
-                    await this.forceUpload(false);
-                    UI.showToast('已使用本地数据覆盖云端', 'success');
-                    break;
-                case 'remote':
-                    await this.forceDownload(false);
-                    UI.showToast('已使用云端数据覆盖本地', 'success');
-                    break;
-                case 'merge':
-                    await this.mergeAndSync(remoteData);
-                    UI.showToast('已智能合并数据', 'success');
-                    break;
-            }
-        } finally {
-            // 无论成功失败都更新状态为在线
-            this.updateStatus(true);
-        }
-
-        // 刷新页面显示
-        if (typeof App !== 'undefined' && App.refresh) {
-            App.refresh();
-        }
-    },
-
-    /**
-     * 合并数据并同步
-     * @param {object} remoteData
-     */
-    async mergeAndSync(remoteData) {
-        // 合并 penalty 数据（VPS 脚本写入的）- 优先使用远程数据
-        if (remoteData.penalty) {
-            Store.data.penalty = Store.data.penalty || {};
-            for (const userId of ['user77', 'user11']) {
-                const localPenalty = Store.data.penalty[userId] || {};
-                const remotePenalty = remoteData.penalty[userId] || {};
-
-                // 如果远程有更新的结算记录，使用远程数据
-                if (remotePenalty.lastCheckDate &&
-                    (!localPenalty.lastCheckDate || remotePenalty.lastCheckDate >= localPenalty.lastCheckDate)) {
-                    Store.data.penalty[userId] = remotePenalty;
-                }
-            }
-        }
-
-        // 合并 history（去重）
-        if (remoteData.history && Array.isArray(remoteData.history)) {
-            const localHistory = Store.data.history || [];
-            const remoteHistory = remoteData.history;
-            Store.data.history = this.mergeHistory(localHistory, remoteHistory);
-        }
-
-        // 合并 points - 检测是否有 VPS 惩罚扣分
-        if (remoteData.points) {
-            for (const userId of ['user77', 'user11']) {
-                if (remoteData.points[userId] && Store.data.points[userId]) {
-                    const localPenalty = Store.data.penalty?.[userId] || {};
-                    const remotePenalty = remoteData.penalty?.[userId] || {};
-
-                    // 如果远程有更新的惩罚记录，接受远程积分（即使更低，因为是被扣分了）
-                    const remotePenaltyIsNewer = remotePenalty.lastCheckDate &&
-                        (!localPenalty.lastCheckDate || remotePenalty.lastCheckDate > localPenalty.lastCheckDate);
-
-                    if (remotePenaltyIsNewer) {
-                        // VPS 执行了扣分，接受远程积分
-                        console.log(`[Firebase] 检测到 ${userId} 有新的惩罚记录，接受远程积分`);
-                        Store.data.points[userId].total = remoteData.points[userId].total;
-                        Store.data.points[userId].weekly = remoteData.points[userId].weekly;
-                    } else {
-                        // 无新惩罚，取较大值（正常加分场景）
-                        if (remoteData.points[userId].total > Store.data.points[userId].total) {
-                            Store.data.points[userId].total = remoteData.points[userId].total;
-                        }
-                        if (remoteData.points[userId].weekly > Store.data.points[userId].weekly) {
-                            Store.data.points[userId].weekly = remoteData.points[userId].weekly;
-                        }
-                    }
-                }
-            }
-        }
-
-        // 合并其他数据
-        const fieldsToMerge = ['bounties', 'taskPool', 'dailyTasks', 'taskStreaks', 'stats', 'starLevels', 'taskSlots', 'systemBountyWeekly'];
-        for (const field of fieldsToMerge) {
-            if (remoteData[field] && !Store.data[field]) {
-                Store.data[field] = remoteData[field];
-            }
-        }
-
-        // 更新同步时间并上传
-        const syncTime = new Date().toISOString();
-        this.lastUploadTime = syncTime;
-        Store.data.system = Store.data.system || {};
-        Store.data.system.lastSync = syncTime;
-
-        const dataRef = this.ref(this.database, 'pointSystemV3');
-        await this.set(dataRef, Store.data);
-
-        Store.save();
-        this.lastSyncTime = new Date();
-        this.updateSyncTimeDisplay();
-    },
-
-    /**
-     * 确认后强制上传（本地覆盖云端）
-     */
-    confirmForceUpload() {
-        if (typeof Modal !== 'undefined' && Modal.confirm) {
-            Modal.confirm(
-                '确认覆盖云端数据？',
-                '本地数据将完全覆盖云端数据，此操作不可撤销。',
-                () => this.forceUpload(true)
-            );
-        } else {
-            if (confirm('确认用本地数据覆盖云端？此操作不可撤销。')) {
-                this.forceUpload(true);
-            }
-        }
-    },
-
-    /**
-     * 强制上传本地数据到云端
-     * @param {boolean} showToast - 是否显示提示
-     */
-    async forceUpload(showToast = true) {
-        if (!this.isOnline || !this.database || !this.set || !this.ref) {
-            UI.showToast('无法连接到服务器', 'error');
-            return false;
-        }
-
-        try {
-            this.showSyncingStatus();
-
-            const syncTime = new Date().toISOString();
-            this.lastUploadTime = syncTime;
-            Store.data.system = Store.data.system || {};
-            Store.data.system.lastSync = syncTime;
-
-            const dataRef = this.ref(this.database, 'pointSystemV3');
-            await this.set(dataRef, Store.data);
-
-            Store.save();
-            this.lastSyncTime = new Date();
-            this.updateSyncTimeDisplay();
-
-            if (showToast) {
-                UI.showToast('本地数据已上传到云端', 'success');
-            }
-
-            this.updateStatus(true);
-            return true;
-        } catch (e) {
-            console.error('[Firebase] 上传失败:', e);
-            UI.showToast('上传失败: ' + e.message, 'error');
-            this.updateStatus(true);
-            return false;
-        }
-    },
-
-    /**
-     * 确认后强制下载（云端覆盖本地）
-     */
-    confirmForceDownload() {
-        if (typeof Modal !== 'undefined' && Modal.confirm) {
-            Modal.confirm(
-                '确认覆盖本地数据？',
-                '云端数据将完全覆盖本地数据，此操作不可撤销。',
-                () => this.forceDownload(true)
-            );
-        } else {
-            if (confirm('确认用云端数据覆盖本地？此操作不可撤销。')) {
-                this.forceDownload(true);
-            }
-        }
-    },
-
-    /**
-     * 强制从 Firebase 下载数据
-     * @param {boolean} showToast - 是否显示提示
-     */
-    async forceDownload(showToast = true) {
-        if (!this.isOnline || !this.database || !this.get || !this.ref) {
-            UI.showToast('无法连接到服务器', 'error');
-            return false;
-        }
-
-        try {
-            this.showSyncingStatus();
-
-            const dataRef = this.ref(this.database, 'pointSystemV3');
-            const snapshot = await this.get(dataRef);
-
-            if (snapshot.exists()) {
-                Store.replaceData(snapshot.val());
-                this.lastSyncTime = new Date();
-                this.updateSyncTimeDisplay();
-
-                if (showToast) {
-                    UI.showToast('云端数据已下载到本地', 'success');
-                }
-
-                if (typeof App !== 'undefined' && App.refresh) {
-                    App.refresh();
-                }
-
-                this.updateStatus(true);
-                return true;
-            } else {
-                UI.showToast('云端无数据', 'warning');
-                this.updateStatus(true);
-                return false;
-            }
-        } catch (e) {
-            console.error('[Firebase] 下载失败:', e);
-            UI.showToast('下载失败: ' + e.message, 'error');
-            this.updateStatus(true);
-            return false;
-        }
-    },
-
-    /**
-     * 积分变化时触发同步（供其他模块调用）
-     */
-    onPointsChanged() {
-        // 延迟同步，避免频繁触发
-        if (this.syncTimeout) {
-            clearTimeout(this.syncTimeout);
-        }
-        this.syncTimeout = setTimeout(() => {
-            this.quietSync();
-        }, 2000);
-    },
-
-    /**
-     * 静默同步（不显示冲突弹窗，直接合并）
-     */
-    async quietSync() {
-        if (!this.isOnline || !this.database || !this.get || !this.ref || this.isSyncing) {
-            return;
-        }
-
-        try {
-            const dataRef = this.ref(this.database, 'pointSystemV3');
-            const snapshot = await this.get(dataRef);
-            const remoteData = snapshot.val();
-
-            if (remoteData) {
-                await this.mergeAndSync(remoteData);
-            } else {
-                await this.forceUpload(false);
-            }
-
-            console.log('[Firebase] 静默同步完成');
-        } catch (e) {
-            console.error('[Firebase] 静默同步失败:', e);
-        }
-    },
-
-    /**
-     * 合并两个对象（深度合并）
-     */
-    mergeObjects(local, remote) {
-        const result = { ...local };
-        for (const key in remote) {
-            if (remote.hasOwnProperty(key)) {
-                if (typeof remote[key] === 'object' && remote[key] !== null && !Array.isArray(remote[key])) {
-                    result[key] = this.mergeObjects(result[key] || {}, remote[key]);
-                } else {
-                    result[key] = remote[key];
-                }
-            }
-        }
-        return result;
-    },
-
-    /**
-     * 合并历史记录（去重）
-     */
-    mergeHistory(localHistory, remoteHistory) {
-        const idSet = new Set();
-        const merged = [];
-
-        // 先添加远程历史
-        for (const item of remoteHistory) {
-            if (item.id && !idSet.has(item.id)) {
-                idSet.add(item.id);
-                merged.push(item);
-            }
-        }
-
-        // 再添加本地历史（不重复的）
-        for (const item of localHistory) {
-            if (item.id && !idSet.has(item.id)) {
-                idSet.add(item.id);
-                merged.push(item);
-            }
-        }
-
-        // 按时间排序（新的在前）
-        merged.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-        // 最多保留 500 条
-        return merged.slice(0, 500);
     },
 
     /**
@@ -845,31 +494,32 @@ const FirebaseSync = {
     },
 
     /**
-     * 更新同步时间显示
+     * 设置同步按钮加载状态
      */
-    updateSyncTimeDisplay() {
-        const timeEl = document.getElementById('last-sync-time');
-        if (timeEl && this.lastSyncTime) {
-            timeEl.textContent = Utils.formatDate(this.lastSyncTime, 'HH:mm:ss');
+    setSyncButtonLoading(loading) {
+        const btn = document.getElementById('btn-cloud-sync');
+        if (btn) {
+            if (loading) {
+                btn.classList.add('syncing');
+            } else {
+                btn.classList.remove('syncing');
+            }
         }
     },
 
     /**
-     * 兼容旧的 sync 方法
+     * 兼容旧的方法
      */
+    async smartSync() {
+        return this.manualUpload();
+    },
+
     async sync() {
-        return this.smartSync();
+        return this.manualUpload();
     },
 
-    /**
-     * 停止监听
-     */
-    stopListening() {
-        if (this.unsubscribe) {
-            this.unsubscribe();
-            this.unsubscribe = null;
-            console.log('[Firebase] 停止监听');
-        }
+    onPointsChanged() {
+        this.onDataModified();
     }
 };
 

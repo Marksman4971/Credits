@@ -58,10 +58,18 @@
     <link rel="stylesheet" href="./css/responsive.css">
 </head>
 <body>
-    <!-- 连接状态指示器 -->
-    <div id="connection-status" class="connection-status status-offline">
-        <span class="status-icon">●</span>
-        <span class="status-text">离线</span>
+    <!-- 连接状态和同步按钮 -->
+    <div class="sync-bar">
+        <div id="connection-status" class="connection-status status-offline">
+            <span class="status-icon">●</span>
+            <span class="status-text">离线</span>
+        </div>
+        <button id="btn-cloud-sync" class="cloud-sync-btn" title="同步到云端">
+            <svg class="cloud-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                <path fill="currentColor" d="M8 13l4-4 4 4h-3v4h-2v-4H8z" opacity="0.8"/>
+            </svg>
+        </button>
     </div>
 
     <div class="container">
