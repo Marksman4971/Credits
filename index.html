@@ -525,56 +525,35 @@
             <section id="page-settings" class="page">
                 <h2>设置</h2>
 
-                <div class="settings-section">
-                    <h3>☁️ 数据同步</h3>
-                    <div class="sync-status-card">
-                        <div class="sync-status-icon">🔄</div>
-                        <div class="sync-status-info">
-                            <span class="sync-status-label">上次同步</span>
-                            <span class="sync-status-time" id="last-sync-time">--</span>
-                        </div>
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <h3>数据同步</h3>
+                        <span class="sync-time">上次同步: <span id="last-sync-time">--</span></span>
                     </div>
-                    <div class="settings-buttons">
-                        <button class="settings-btn settings-btn-blue" id="btn-sync-upload">
-                            <span class="settings-btn-icon">📤</span>
-                            <span class="settings-btn-text">本地→云端</span>
-                        </button>
-                        <button class="settings-btn settings-btn-green" id="btn-sync-download">
-                            <span class="settings-btn-icon">📥</span>
-                            <span class="settings-btn-text">云端→本地</span>
-                        </button>
+                    <div class="settings-card-body">
+                        <button class="btn-setting btn-setting-primary" id="btn-sync-upload">本地 → 云端</button>
+                        <button class="btn-setting btn-setting-success" id="btn-sync-download">云端 → 本地</button>
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <h3>💾 数据备份</h3>
-                    <div class="settings-buttons">
-                        <button class="settings-btn settings-btn-purple" id="btn-export">
-                            <span class="settings-btn-icon">📁</span>
-                            <span class="settings-btn-text">导出数据</span>
-                        </button>
-                        <button class="settings-btn settings-btn-orange" id="btn-import">
-                            <span class="settings-btn-icon">📂</span>
-                            <span class="settings-btn-text">导入数据</span>
-                        </button>
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <h3>数据备份</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <button class="btn-setting btn-setting-info" id="btn-export">导出数据</button>
+                        <button class="btn-setting btn-setting-warning" id="btn-import">导入数据</button>
                     </div>
                 </div>
 
-                <div class="settings-section danger-zone">
-                    <h3>⚠️ 危险操作</h3>
-                    <div class="settings-buttons">
-                        <button class="settings-btn settings-btn-danger" id="btn-clear-history">
-                            <span class="settings-btn-icon">🗑️</span>
-                            <span class="settings-btn-text">清空历史</span>
-                        </button>
-                        <button class="settings-btn settings-btn-danger" id="btn-reset-weekly">
-                            <span class="settings-btn-icon">📊</span>
-                            <span class="settings-btn-text">重置周统计</span>
-                        </button>
-                        <button class="settings-btn settings-btn-danger" id="btn-reset-all">
-                            <span class="settings-btn-icon">💥</span>
-                            <span class="settings-btn-text">重置所有</span>
-                        </button>
+                <div class="settings-card settings-card-danger">
+                    <div class="settings-card-header">
+                        <h3>危险操作</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <button class="btn-setting btn-setting-danger" id="btn-clear-history">清空历史</button>
+                        <button class="btn-setting btn-setting-danger" id="btn-reset-weekly">重置周统计</button>
+                        <button class="btn-setting btn-setting-danger" id="btn-reset-all">重置所有数据</button>
                     </div>
                 </div>
             </section>

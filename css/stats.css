@@ -253,130 +253,97 @@
 }
 
 /* ========== 设置页面 ========== */
-.settings-section {
+.settings-card {
     background: var(--bg-white);
-    padding: 25px;
     border-radius: var(--radius-lg);
     margin-bottom: 20px;
     box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
-.settings-section h3 {
-    font-size: 1.15em;
-    color: var(--text-primary);
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* 同步状态卡片 */
-.sync-status-card {
+.settings-card-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 15px;
-    background: linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 100%);
-    padding: 18px 20px;
-    border-radius: var(--radius-md);
-    margin-bottom: 20px;
-    border: 1px solid #d0e8ff;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
 }
 
-.sync-status-icon {
-    font-size: 2em;
-}
-
-.sync-status-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.sync-status-label {
-    font-size: 0.85em;
-    color: var(--text-muted);
-}
-
-.sync-status-time {
-    font-size: 1.2em;
+.settings-card-header h3 {
+    font-size: 1.1em;
     font-weight: 600;
-    color: var(--primary-color);
+    margin: 0;
 }
 
-/* 设置按钮组 */
-.settings-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+.sync-time {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.sync-time #last-sync-time {
+    font-weight: 600;
+}
+
+.settings-card-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-wrap: wrap;
     gap: 12px;
 }
 
 /* 设置按钮 */
-.settings-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 20px 15px;
+.btn-setting {
+    flex: 1;
+    min-width: 120px;
+    padding: 14px 24px;
     border: none;
     border-radius: var(--radius-md);
+    font-size: 0.95em;
+    font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
     transition: all var(--transition-normal);
-    font-family: inherit;
 }
 
-.settings-btn:hover {
-    transform: translateY(-3px);
+.btn-setting:hover {
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.settings-btn:active {
+.btn-setting:active {
     transform: translateY(0);
 }
 
-.settings-btn-icon {
-    font-size: 1.8em;
-}
-
-.settings-btn-text {
-    font-size: 0.9em;
-    font-weight: 500;
-}
-
 /* 按钮颜色 */
-.settings-btn-blue {
+.btn-setting-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-setting-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.btn-setting-info {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     color: white;
 }
 
-.settings-btn-green {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+.btn-setting-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: white;
 }
 
-.settings-btn-purple {
-    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+.btn-setting-danger {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
     color: white;
 }
 
-.settings-btn-orange {
-    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-    color: white;
-}
-
-.settings-btn-danger {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-    color: white;
-}
-
-/* 危险操作区 */
-.danger-zone {
-    border: 2px solid #ffcdd2;
-    background: linear-gradient(135deg, #fff5f5 0%, #ffebee 100%);
-}
-
-.danger-zone h3 {
-    color: var(--danger-color);
-    border-bottom-color: #ffcdd2;
+/* 危险操作卡片 */
+.settings-card-danger .settings-card-header {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
 }
 
 /* ========== 统计表格 ========== */
