@@ -319,6 +319,7 @@ const FirebaseSync = {
             this.saveLocalSyncTime(syncTime);
             this.localModified = false;
             this.lastSyncTime = new Date();
+            this.updateSyncTimeDisplay();
 
             console.log('[Firebase] 上传成功');
         } finally {
@@ -356,6 +357,7 @@ const FirebaseSync = {
 
                 this.localModified = false;
                 this.lastSyncTime = new Date();
+                this.updateSyncTimeDisplay();
 
                 if (typeof App !== 'undefined' && App.refresh) {
                     App.refresh();
@@ -490,6 +492,20 @@ const FirebaseSync = {
             statusEl.className = 'connection-status status-syncing';
             statusEl.querySelector('.status-icon').textContent = '◐';
             statusEl.querySelector('.status-text').textContent = '同步中';
+        }
+    },
+
+    /**
+     * 更新同步时间显示
+     */
+    updateSyncTimeDisplay() {
+        const timeEl = document.getElementById('last-sync-time');
+        if (timeEl && this.lastSyncTime) {
+            const time = this.lastSyncTime;
+            const hours = String(time.getHours()).padStart(2, '0');
+            const minutes = String(time.getMinutes()).padStart(2, '0');
+            const seconds = String(time.getSeconds()).padStart(2, '0');
+            timeEl.textContent = `${hours}:${minutes}:${seconds}`;
         }
     },
 

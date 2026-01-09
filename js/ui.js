@@ -191,15 +191,34 @@ const UI = {
         });
     },
 
+    // 密码验证存储键
+    AUTH_STORAGE_KEY: 'credits_auth_verified',
+
     /**
-     * 密码验证
+     * 检查是否已验证密码
+     * @returns {boolean}
+     */
+    isPasswordVerified() {
+        return localStorage.getItem(this.AUTH_STORAGE_KEY) === 'true';
+    },
+
+    /**
+     * 密码验证（验证一次后永久有效）
      * @returns {Promise<boolean>}
      */
     async requirePassword() {
+        // 如果已经验证过，直接返回 true
+        if (this.isPasswordVerified()) {
+            return true;
+        }
+
         return new Promise((resolve) => {
             Modal.show('password', {
                 onConfirm: (password) => {
                     if (password === CONFIG.ADMIN_PASSWORD) {
+                        // 保存验证状态到 localStorage
+                        localStorage.setItem(this.AUTH_STORAGE_KEY, 'true');
+                        this.showToast('验证成功', 'success');
                         resolve(true);
                     } else {
                         this.showToast('密码错误', 'error');
@@ -209,6 +228,14 @@ const UI = {
                 onCancel: () => resolve(false)
             });
         });
+    },
+
+    /**
+     * 清除密码验证状态
+     */
+    clearPasswordVerification() {
+        localStorage.removeItem(this.AUTH_STORAGE_KEY);
+        this.showToast('已退出验证', 'info');
     },
 
     /**
